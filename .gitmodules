@@ -1,0 +1,15 @@
+[submodule "deps/vgcore/deps/assimp"]
+	path = deps/vgcore/deps/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "deps/vgcore/deps/glm"]
+	path = deps/vgcore/deps/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "deps/vgcore/deps/glfw"]
+	path = deps/vgcore/deps/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "deps/vgcore/deps/IconFontCppHeaders"]
+	path = deps/vgcore/deps/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "deps/vgcore/deps/imgui/imgui"]
+	path = deps/vgcore/deps/imgui/imgui
+	url = https://gitlab.com/virintox/imgui.git

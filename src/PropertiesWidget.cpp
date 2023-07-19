@@ -110,6 +110,14 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
                 ImGuiDrawSelection("Link Type##" + std::to_string(i) + Id, link.Name, LinkTypes.begin(), LinkTypes.end(),
                                    [](std::string s) { return s; });
                 ImGui::InputText(("Destination##PropWindLink" + std::to_string(i) + Id).c_str(), &link.Destination);
+
+                if(Element* gotoElem = GetMainWindow()->loadedMap.GetElementById(link.Destination)) {
+                    ImGui::SameLine();
+                    if (ImGui::Button(ICON_FA_CHEVRON_RIGHT)) {
+                        GetMainWindow()->selectedElem = gotoElem;
+                    }
+                }
+
                 ImGui::InputText(("Unit File##PropWindLink" + std::to_string(i) + Id).c_str(), &link.UnitFile);
                 if(ImGui::Button((ICON_FA_TRASH "##PropWindLinkDelete" + std::to_string(i) + Id).c_str())) {
                     elem->Links.erase(linkIter);
@@ -188,9 +196,9 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
     if(!elem->Parameters.empty()) {
         if (ImGui::CollapsingHeader(("Parameters##" + Id).c_str())) {
             ImGui::Indent();
-            for (int i = 1; i <= elem->Parameters.size(); i++) {
+            for (int i = 0; i < elem->Parameters.size(); i++) {
                 ImGui::InputInt(("Parameter " + std::to_string(i) + "##PropWind" + Id).c_str(),
-                                (int *) &elem->Parameters[i - 1]);
+                                (int *) &elem->Parameters[i]);
             }
             ImGui::Unindent();
         }
@@ -199,9 +207,9 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
     if(!elem->FloatParameters.empty()) {
         if (ImGui::CollapsingHeader(("Float Parameters##" + Id).c_str())) {
             ImGui::Indent();
-            for (int i = 1; i <= elem->FloatParameters.size(); i++) {
+            for (int i = 0; i < elem->FloatParameters.size(); i++) {
                 ImGui::InputFloat(("Float Parameter " + std::to_string(i) + "##PropWind" + Id).c_str(),
-                                  &elem->FloatParameters[i - 1]);
+                                  &elem->FloatParameters[i]);
             }
             ImGui::Unindent();
         }

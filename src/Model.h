@@ -10,17 +10,24 @@
 #include<map>
 #include "virintox/gcore/Mesh.h"
 #include "Transform.h"
+#include "virintox/gcore/Material.h"
 
 class Model {
 public:
     Model(std::string modelName);
 
-    void Draw(Transform tf);
+    Model(const Model& mdl);
 
-    void DrawSelection(Transform tf);
+    ~Model();
+
+    unsigned *CopyCount;
+
+    void Draw(Transform tf, Graphics::Shader &shader, glm::mat4 VP);
+
+    void DrawSelection(Transform tf, Graphics::Shader &shader, glm::mat4 VP);
 protected:
-    std::vector<Graphics::Mesh> Meshes;
-    std::vector<Graphics::Texture> Textures;
+    std::list<Graphics::Mesh*> Meshes;
+    std::vector<Graphics::Material*> Materials;
 
     //std::map<std::string,Graphics::Texture> TexturesForName;
 };

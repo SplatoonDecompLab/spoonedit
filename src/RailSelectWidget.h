@@ -5,7 +5,7 @@
 #ifndef SPOONTOOL_RAILSELECTWIDGET_H
 #define SPOONTOOL_RAILSELECTWIDGET_H
 
-#include<virintox/gcore/Widget.h>
+#include<virintox/gcore/gui/Widget.h>
 
 
 class RailSelectWidget: public Graphics::Widget {

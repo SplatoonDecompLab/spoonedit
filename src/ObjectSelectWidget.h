@@ -6,7 +6,7 @@
 #define SPOONTOOL_OBJECTSELECTWIDGET_H
 
 
-#include "virintox/gcore/Widget.h"
+#include "virintox/gcore/gui/Widget.h"
 
 class ObjectSelectWidget: public Graphics::Widget {
 public:

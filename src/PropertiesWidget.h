@@ -6,7 +6,7 @@
 #define SPOONTOOL_PROPERTIESWIDGET_H
 
 
-#include "virintox/gcore/Widget.h"
+#include "virintox/gcore/gui/Widget.h"
 
 class PropertiesWidget : public Graphics::Widget {
 public:

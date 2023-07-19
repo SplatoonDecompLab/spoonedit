@@ -9,6 +9,7 @@
 #include <boost/iostreams/device/file.hpp>
 #include<iostream>
 #include<boost/algorithm/string.hpp>
+#include<algorithm>
 
 //GENSERIALIZABLECONTENT(Map,(Objects,Rails))
 
@@ -63,6 +64,25 @@ void Map::Export(boost::filesystem::path YamlOut) {
     file.close();
 }
 
+Element *Map::GetElementById(std::string id) {
+    //Wish i could use some kind of cache but im too lazy to check removal from Rails or Objects as to not cause any stale references to be output
+    // might do it at some point in the future
+
+    auto elemRef1 = std::find_if(Objects.begin(), Objects.end(),[&](const LevelObject &obj){return obj.Name == id;});
+    if(elemRef1 != Objects.end())
+        return &*elemRef1;
+
+    if(std::any_of(id.begin(), id.end(),[](char c){return c=='/';})) {
+
+        id.erase(id.find('/'));
+
+        auto elemRef2 = std::find_if(Rails.begin(), Rails.end(), [&](const Rail &rail) { return rail.Name == id; });
+        if (elemRef2 != Rails.end())
+            return &*elemRef2;
+    }
+
+    return nullptr;
+}
 
 
 Map ConvertFromYaml(boost::filesystem::path File){

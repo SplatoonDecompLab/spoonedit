@@ -2,7 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Tools/MapTools/deps/vserialize" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deps/vgcore" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/vgcore/deps/IconFontCppHeaders" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/vgcore/deps/assimp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/vgcore/deps/glfw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/vgcore/deps/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/vgcore/deps/imgui/imgui" vcs="Git" />
   </component>
 </project>

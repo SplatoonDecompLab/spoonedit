@@ -3,7 +3,7 @@
 #include "ObjectSelectWidget.h"
 #include "RailSelectWidget.h"
 #include "MainViewport.h"
-#include <virintox/gcore/FileSelectDialog.h>
+#include <virintox/gcore/gui/FileSelectDialog.h>
 #include <virintox/gcore/Graphics.h>
 #include<imgui.h>
 #include <IconsFontAwesome6.h>
@@ -85,6 +85,16 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
         MainWindowInst->WidgetByName.find("Properties")->second->Active ^= true;
     });
 
+    AddMenu("Game");
+    AddMenuItem("Game", "Gambit(1)", [&](){
+        gameSetting = GameMode::Gambit;
+    });
+    AddMenuItem("Game", "Blitz(2)", [&](){
+        gameSetting = GameMode::Blitz;
+    });
+    AddMenuItem("Game", "Thunder(3)", [&](){
+        gameSetting = GameMode::Thunder;
+    });
 
     AddMenu("Object");
 
@@ -108,6 +118,16 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                 ObjCpy.TF.Rotation = {0, 0, 0};
                 ObjCpy.TF.Position = {0, 0, 0};
 
+                for(long &param: ObjCpy.Parameters){
+                    param = -99;
+                }
+
+                for(float &param: ObjCpy.FloatParameters){
+                    param = -99.0f;
+                }
+
+                ObjCpy.Layer = Common;
+
                 ExportObj(ObjCpy);
             }
         }
@@ -127,6 +147,17 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                    LevelObject ObjCpy = LevelObject(obj);
                    ObjCpy.Name = ObjCpy.Type;
                    ObjCpy.Links = std::vector<Link>();
+
+                   for(long &param: ObjCpy.Parameters){
+                       param = -99;
+                   }
+
+                   for(float &param: ObjCpy.FloatParameters){
+                       param = -99.0f;
+                   }
+
+                   ObjCpy.Layer = Common;
+
                    ObjCpy.TF.Scale = {1, 1, 1};
                    ObjCpy.TF.Rotation = {0, 0, 0};
                    ObjCpy.TF.Position = {0, 0, 0};
@@ -144,6 +175,11 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
 
 void MainWindow::Update() {
 
+}
+
+void MainWindow::MenuExtraRender() {
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - ImGui::CalcTextSize(("Game: " + GameMode::ToString(gameSetting) + " ").c_str()).x);
+    ImGui::Text("%s", ("Game: " + GameMode::ToString(gameSetting)).c_str());
 }
 
 MainWindow* GetMainWindow(){

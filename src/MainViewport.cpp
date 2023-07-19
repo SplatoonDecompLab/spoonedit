@@ -8,44 +8,8 @@
 #include<imgui.h>
 #include "IconsFontAwesome6.h"
 #include "glm/gtx/string_cast.hpp"
-#include <glm/gtx/rotate_vector.hpp>
 
 #include<cmath>
-
-const GLchar *vertexShader = "#version 460\n"
-                             "layout (location = 0) in vec3 aPos;\n"
-                             "layout (location = 1) in vec2 aTexCoord;\n"
-                             "uniform mat4 VP;\n"
-                             "uniform mat4 TransformationMatrix;\n"
-                             "uniform mat4 TransformationMatrixNoYInv;\n"
-                             "out vec2 TexCoord;\n"
-                             "out vec4 WldPos;\n"
-                             "void main(){\n"
-                             "    vec3 glPos = vec3(aPos.x,-aPos.y,aPos.z);\n"
-                             "    WldPos = TransformationMatrixNoYInv * vec4(aPos.xyz,1);\n"
-                             "    gl_Position = (VP * TransformationMatrix) * vec4(glPos.x,glPos.y,glPos.z,1);\n"
-                             "    TexCoord = aTexCoord;\n"
-                             "}\n";
-const GLchar *fragmentShader = "#version 460\n"
-                               "in vec2 TexCoord;\n"
-                               "in vec4 WldPos;\n"
-                               "layout(location = 1) out vec4 FragColor;\n"
-                               "layout(location = 2) out unsigned int ObjId;\n"
-                               "layout(location = 3) out vec4 WorldPos;\n"
-                               "uniform sampler2D tex;\n"
-                               "uniform unsigned int ObjIdIn;\n"
-                               "uniform vec4 ObjColor;\n"
-                               "//out vec4 CamPos;\n"
-                               "void main(){\n"
-                               "    ObjId = ObjIdIn;\n"
-                               "    WorldPos = vec4(WldPos.xyz,1);\n"
-                               "    //if(WldPos.w == 0) WorldPos=vec4(WldPos.xyz,1);\n"
-                               "    vec4 textel = texture(tex,TexCoord);\n"
-                               "    if(textel.a < 0.2) discard;\n"
-                               "    //textel.a = (CamPos.z / CamPos.w) / 100;\n"
-                               "    FragColor = textel * ObjColor;\n"
-                               "    //FragColor = vec4(1,1,1,1);\n"
-                               "}";
 
 MainViewport *MainVP;
 
@@ -64,12 +28,13 @@ glm::mat4 TransformToMatrix(Transform tf) {
 }
 
 glm::vec3 ToGlmVec3(Vector3 Vec3) {
-    return glm::vec3(Vec3.X, Vec3.Y, Vec3.Z);
+    return {Vec3.X, Vec3.Y, Vec3.Z};
 }
 
-bool IsArea(std::string Type){
-    if( Type == "Area" ||
+bool IsArea(const std::string& Type) {
+    if (Type == "Area" ||
         Type == "Area_Yellow" ||
+        Type == "Area_Pink" ||
         Type == "StageArea" ||
         Type == "GeneralArea" ||
         Type == "PaintedArea" ||
@@ -81,20 +46,72 @@ bool IsArea(std::string Type){
     return false;
 }
 
-MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true) {
+MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), VP(1.0f) {
 
     MainVP = this;
-    shader = Graphics::Shader(vertexShader, fragmentShader);
+
+    m_internalFramebuf = std::make_unique<Graphics::Framebuffer>(
+            std::vector<Graphics::FramebufferTextureInfo>{
+                {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0},
+                {GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, GL_COLOR_ATTACHMENT1},
+                {GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2},
+                {GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, GL_DEPTH_STENCIL_ATTACHMENT}
+            },
+            Graphics::Shader("ForwardPass"));
+
+    SunCam = std::make_unique<Graphics::Framebuffer>(
+            std::vector<Graphics::FramebufferTextureInfo>{
+                    {GL_DEPTH_COMPONENT16,GL_DEPTH_COMPONENT,GL_FLOAT,GL_DEPTH_ATTACHMENT}
+            },
+            Graphics::Shader("ShadowPass"),
+            Math::Vector2i(16384,16384));
+
+    auto tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
+    glBindTexture(GL_TEXTURE_2D, tex.m_texture.getId());
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_2D,0);
+
+
     //ObjMesh = Graphics::Mesh();
 
-    GLuint ObjColPos = glGetUniformLocation(shader.ShaderId, "ObjColor");
+    GLint ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
     glUniform4f(ObjColPos, 1, 1, 1, 1);
 
 }
 
+void MainViewport::RenderRail(Rail *rail) {
+    static Model RailPointMdl = Model("St_RailPoint");
+
+    if (rail->Points.size() > 1) {
+        auto lastRailPoint = rail->Points.front();
+
+        for (RailPoint &railPoint: rail->Points) {
+            RailPointMdl.Draw(railPoint.TF, m_internalFramebuf->m_shader, VP);
+        }
+    }
+}
+
 void MainViewport::Draw() {
-    GLuint ObjIdPos = glGetUniformLocation(shader.ShaderId, "ObjIdIn");
-    GLuint ObjColPos = glGetUniformLocation(shader.ShaderId, "ObjColor");
+
+#ifndef NDEBUG
+    glClearColor(.2, .2, .2, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
+
+    m_internalFramebuf->m_shader.use();
+
+    GLint ObjIdPos = m_internalFramebuf->m_shader.getUniformLocation("ObjIdIn");
+    GLint ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
+
+    GLint TeamId = m_internalFramebuf->m_shader.getUniformLocation("TeamId");
+
+    GLint CamPosLoc = m_internalFramebuf->m_shader.getUniformLocation("CameraPosition");
 
 
     static auto lasttime = boost::chrono::high_resolution_clock::now();
@@ -151,30 +168,42 @@ void MainViewport::Draw() {
     glm::mat4 projectionMatrix = glm::perspective(
             glm::radians(
                     fov), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
-            (float) framewidth /
-            (float) frameheight,       // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-            0.1f,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-            10000.0f             // Far clipping plane. Keep as little as possible.
+            (float) m_internalFramebuf->getSize().x /
+            (float) m_internalFramebuf->getSize().y,       // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
+            NearClippingPlane,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+            FarClippingPlane             // Far clipping plane. Keep as little as possible.
     );
 
     //glm::mat4 ViewMatrix = glm::translate(glm::mat4(1.0f), -camPos);
     glm::mat4 ViewMatrix = glm::lookAt(camPos, camPos + cameraDirection, glm::vec3(0, 1, 0));
 
-    glm::mat4 ModelMat = glm::mat4(1.0f);
-
     VP = projectionMatrix * ViewMatrix;// * ViewMatrix * ModelMat;
+
+    glUniform3f(CamPosLoc, camPos.x,camPos.y,camPos.z);
 
     if (ImGui::BeginPopup("Main VP Debug")) {
         ImGui::DragFloat3("Camera Postion", &camPos.x, 0.01);
         ImGui::DragFloat2("Camera Rotation", &camrot.x, 0.01);
         ImGui::SliderFloat("FOV", &fov, 0, 180);
         ImGui::DragFloat("Speed", &speed, 1);
+        ImGui::DragFloat("Near Clipping Plane", &NearClippingPlane, 1);
+        ImGui::DragFloat("Far Clipping Plane", &FarClippingPlane, 1);
+        ImGui::DragFloat("Shadow Area", &shadowArea, 0.01);
+        //ImGui::SliderFloat("Shading Effectiveness", &ShadingEffectiveness, 0, 1);
+        ImGui::DragFloat3("Light Direction", &LightDir.x, 0.01);
         ImGui::Checkbox("Draw All Areas", &drawAllAreas);
         ImGui::EndPopup();
     }
 
-    GLuint MatrixID = glGetUniformLocation(shader.ShaderId, "VP");
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, glm::value_ptr(VP));
+    m_internalFramebuf->m_shader.use();
+
+    GLint LightDirId = m_internalFramebuf->m_shader.getUniformLocation("LightDirection");
+
+
+    glUniform3f(LightDirId, LightDir.x , LightDir.y,LightDir.z);
+
+
+
 
     auto &map = GetMainWindow()->loadedMap;
 
@@ -183,25 +212,82 @@ void MainViewport::Draw() {
     glClearBufferuiv(GL_COLOR, 0, ClearID);
 
     glDrawBuffer(GL_COLOR_ATTACHMENT2);
-    GLfloat ClearPos[] = {0,0,0,0};
+    GLfloat ClearPos[] = {0, 0, 0, 0};
     glClearBufferfv(GL_COLOR, 0, ClearPos);
 
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
     unsigned int ObjID = 16;
 
+
+
+    glm::vec3 SunPos = (glm::normalize(LightDir) * 1500.0f) + camPos;
+
+    glm::mat4 SunProj = glm::ortho(-shadowArea,shadowArea,-shadowArea,shadowArea,1.0f,4000.0f);
+
+    glm::mat4 SunView = glm::lookAt(SunPos,camPos,{0,1,0});
+
+    glm::mat4 SunVP = SunProj * SunView;
+
+    SunCam->bind();
+    SunCam->m_shader.use();
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     for (auto &obj: map.Objects) {
-        if(IsArea(obj.Type) && !drawAllAreas){
+        if (IsArea(obj.Type)) {
+            continue;
+        }
+
+        if (!MdlFromObj.contains(obj.Type)) {
+            if (boost::filesystem::exists(
+                    boost::filesystem::current_path() / "Models" / obj.Type / (obj.Type + ".dae")))
+                MdlFromObj.insert({obj.Type, Model(obj.Type)});
+            else {
+                MdlFromObj.insert({obj.Type, Model("St_Default")});
+                std::cout << "Model missing: \n\t" << obj.Type << std::endl;
+            }
+        }
+
+
+        auto &mdl = MdlFromObj.find(obj.Type)->second;
+
+        mdl.Draw(obj.TF, SunCam->m_shader, SunVP);
+    }
+
+    m_internalFramebuf->bind();
+    m_internalFramebuf->m_shader.use();
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    auto tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
+    tex.m_texture.setActive(5);
+
+    GLint SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
+
+    glUniformMatrix4fv(SunVpLoc,1,GL_FALSE,&SunVP[0][0]);
+
+    for (auto &obj: map.Objects) {
+        glUniform1i(TeamId,(GLint)obj.Team);
+
+        if (IsArea(obj.Type) && !drawAllAreas) {
             ObjID++;
             continue;
-        } else if(IsArea(obj.Type) && drawAllAreas) {
+        } else if (IsArea(obj.Type) && drawAllAreas) {
             static auto AreaMdl = Model("St_Area");
             glUniform1ui(ObjIdPos, ObjID);
             glUniform4f(ObjColPos, 1, 1, 1, 1);
-            AreaMdl.Draw(obj.TF);
+            AreaMdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
             ObjID++;
             continue;
         }
@@ -217,43 +303,46 @@ void MainViewport::Draw() {
         }
 
 
-        auto mdl = MdlFromObj.find(obj.Type)->second;
+        auto &mdl = MdlFromObj.find(obj.Type)->second;
         glUniform1ui(ObjIdPos, ObjID);
         glUniform4f(ObjColPos, 1, 1, 1, 1);
 
-        if(&obj == GetMainWindow()->selectedElem)
+        if (&obj == GetMainWindow()->selectedElem)
             glUniform4f(ObjColPos, 1, .7, .7, 1);
 
-        mdl.Draw(obj.TF);
+        mdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
 
         ObjID++;
     }
 
 
-
     if (GetMainWindow()->selectedElem != nullptr) {
         auto selobj = GetMainWindow()->selectedElem;
 
-        if(IsArea(selobj->Type)) {
+        if (IsArea(selobj->Type)) {
             static auto AreaMdl = Model("St_Area");
 
             glUniform1ui(ObjIdPos, 0);
 
-            AreaMdl.Draw(selobj->TF);
+            AreaMdl.Draw(selobj->TF, m_internalFramebuf->m_shader, VP);
         }
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        if(Rail* rail = dynamic_cast<Rail*>(GetMainWindow()->selectedElem)){
-            static Model Arrow = Model("St_RailPoint");
+        for (Link &link: GetMainWindow()->selectedElem->Links) {
+            glUniform1ui(ObjIdPos, 0);
+            Element *elem = GetMainWindow()->loadedMap.GetElementById(link.Destination);
+            if (elem == nullptr)
+                continue;
 
-            if(rail->Points.size() > 1) {
-                auto lastRailPoint = rail->Points.front();
-
-                for (RailPoint &railPoint: rail->Points) {
-                    Arrow.Draw(railPoint.TF);
-                }
+            if (Rail *rail = dynamic_cast<Rail *>(elem)) {
+                RenderRail(rail);
             }
+        }
+
+        if (Rail *rail = dynamic_cast<Rail *>(GetMainWindow()->selectedElem)) {
+            glUniform1ui(ObjIdPos, 0);
+            RenderRail(rail);
         }
 
         //mdl.DrawSelection(selobj->TF);
@@ -265,30 +354,30 @@ void MainViewport::Draw() {
 
             auto tf = Transform();
             tf.Position = selobj->TF.Position;
-            float size = glm::distance(glm::vec3(tf.Position.X,tf.Position.Y,tf.Position.Z),camPos);
+//            float size = glm::distance(glm::vec3(tf.Position.X, tf.Position.Y, tf.Position.Z), camPos);
             //tf.Scale = {size/ 50, size/ 50, size/ 50};
-            tf.Scale = {1,1,1};
+            tf.Scale = {1, 1, 1};
             tf.Rotation = {0, 0, 90};
 
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
-            if(HoveredObjId == 1)
+            if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
             glUniform1ui(ObjIdPos, 1);
-            Arrow.Draw(tf);
+            Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {0, 0, 0};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
-            if(HoveredObjId == 2)
+            if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
             glUniform1ui(ObjIdPos, 2);
-            Arrow.Draw(tf);
+            Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {90, 0, 0};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
-            if(HoveredObjId == 3)
+            if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
             glUniform1ui(ObjIdPos, 3);
-            Arrow.Draw(tf);
+            Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
         } else if (CurrentGizmoType == Scale) {
@@ -296,30 +385,30 @@ void MainViewport::Draw() {
 
             auto tf = Transform();
             tf.Position = selobj->TF.Position;
-            float size = glm::distance(glm::vec3(tf.Position.X,tf.Position.Y,tf.Position.Z),camPos);
+//            float size = glm::distance(glm::vec3(tf.Position.X, tf.Position.Y, tf.Position.Z), camPos);
             //tf.Scale = {size/ 50, size/ 50, size/ 50};
-            tf.Scale = {1,1,1};
+            tf.Scale = {1, 1, 1};
             tf.Rotation = {selobj->TF.Rotation.X + 90, selobj->TF.Rotation.Y + 90, selobj->TF.Rotation.Z};
 
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
-            if(HoveredObjId == 1)
+            if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
             glUniform1ui(ObjIdPos, 1);
-            Scalar.Draw(tf);
+            Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {selobj->TF.Rotation.X, selobj->TF.Rotation.Y, selobj->TF.Rotation.Z};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
-            if(HoveredObjId == 2)
+            if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
             glUniform1ui(ObjIdPos, 2);
-            Scalar.Draw(tf);
+            Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
-            tf.Rotation = {selobj->TF.Rotation.X + 90 , selobj->TF.Rotation.Y, selobj->TF.Rotation.Z};
+            tf.Rotation = {selobj->TF.Rotation.X + 90, selobj->TF.Rotation.Y, selobj->TF.Rotation.Z};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
-            if(HoveredObjId == 3)
+            if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
             glUniform1ui(ObjIdPos, 3);
-            Scalar.Draw(tf);
+            Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
         } else if (CurrentGizmoType == Rotate) {
@@ -327,30 +416,30 @@ void MainViewport::Draw() {
 
             auto tf = Transform();
             tf.Position = selobj->TF.Position;
-            float size = glm::distance(glm::vec3(tf.Position.X,tf.Position.Y,tf.Position.Z),camPos);
+//            float size = glm::distance(glm::vec3(tf.Position.X, tf.Position.Y, tf.Position.Z), camPos);
             //tf.Scale = {size/ 50, size/ 50, size/ 50};
-            tf.Scale = {1,1,1};
+            tf.Scale = {1, 1, 1};
             tf.Rotation = {0, 0, 90};
 
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
-            if(HoveredObjId == 1)
+            if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
             glUniform1ui(ObjIdPos, 1);
-            Rotator.Draw(tf);
+            Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {0, 0, 0};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
-            if(HoveredObjId == 2)
+            if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
             glUniform1ui(ObjIdPos, 2);
-            Rotator.Draw(tf);
+            Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {90, 0, 0};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
-            if(HoveredObjId == 3)
+            if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
             glUniform1ui(ObjIdPos, 3);
-            Rotator.Draw(tf);
+            Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
         }
@@ -369,23 +458,23 @@ inline float GetVecComponent(const t &v1, const t &v2) {
 
 template<typename t>
 inline t ProjectToRayNormalized(const t &v1, const t &ray) {
-    return glm::dot(v1, ray) / glm::dot(ray,ray) * ray;
+    return glm::dot(v1, ray) / glm::dot(ray, ray) * ray;
 }
 
 template<typename t>
-inline t ProjectToRay(const t &v1,const t &rayStart, const t &ray) {
-    return ProjectToRayNormalized(v1-rayStart,ray - rayStart) + rayStart;
+inline t ProjectToRay(const t &v1, const t &rayStart, const t &ray) {
+    return ProjectToRayNormalized(v1 - rayStart, ray - rayStart) + rayStart;
 }
 
 template<typename t>
-inline t ProjectToRayNormDir(const t &v1,const t &rayStart, const t &RayDir) {
-    return ProjectToRayNormalized(v1-rayStart,RayDir) + rayStart;
+inline t ProjectToRayNormDir(const t &v1, const t &rayStart, const t &RayDir) {
+    return ProjectToRayNormalized(v1 - rayStart, RayDir) + rayStart;
 }
 
-glm::vec3 MainViewport::ScreenSpaceToRay(glm::vec2 ScreenPos){
+glm::vec3 MainViewport::ScreenSpaceToRay(glm::vec2 ScreenPos) {
     auto InverseVP = glm::inverse(VP);
 
-    glm::vec4 worldPos = InverseVP * glm::vec4(ScreenPos,1.0,1.0);
+    glm::vec4 worldPos = InverseVP * glm::vec4(ScreenPos, 1.0, 1.0);
 
     glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
 
@@ -401,7 +490,7 @@ void MainViewport::HandleInput(InputEvent event) {
 
     glm::vec2 DeltaMousePos = currentMpos - lastMpos;
 
-    static glm::vec3 ObjBindingVec = {0,0,0};
+    static glm::vec3 ObjBindingVec = {0, 0, 0};
     static float ObjScalingDist = 0.0f;
 
     static glm::vec3 GizmoDir = glm::vec3(1, 1, 1);
@@ -410,19 +499,19 @@ void MainViewport::HandleInput(InputEvent event) {
     auto SelObj = GetMainWindow()->selectedElem;
 
     switch (event.EventType) {
-        case (InputType::MouseHover):{
-            GLint y = event.y * frameheight;
-            GLint x = event.x * framewidth;
+        case (InputType::MouseHover): {
+            GLint y = event.y * m_internalFramebuf->getSize().y;
+            GLint x = event.x * m_internalFramebuf->getSize().x;
 
             glReadBuffer(GL_COLOR_ATTACHMENT1);
-            glReadPixels(x,y,1,1, GL_RED_INTEGER, GL_UNSIGNED_INT, &HoveredObjId);
+            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &HoveredObjId);
         }
-        break;
+            break;
         case (InputType::MouseDownL): {
-            GLint y = event.y * frameheight;
-            GLint x = event.x * framewidth;
+            GLint y = event.y * m_internalFramebuf->getSize().y;
+            GLint x = event.x * m_internalFramebuf->getSize().x;
 
-            glBindFramebuffer(GL_FRAMEBUFFER, Framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_internalFramebuf->getId());
             glReadBuffer(GL_COLOR_ATTACHMENT1);
             unsigned int obj = 0;
 
@@ -432,7 +521,7 @@ void MainViewport::HandleInput(InputEvent event) {
             if (obj < 16) {
                 SpecialObjCur = obj;
                 if (CurrentGizmoType == Move) {
-                    if(0 < obj && obj <= 3 ) {
+                    if (0 < obj && obj <= 3) {
                         if (obj == 1) {
                             GizmoDir = {1, 0, 0};
                         } else if (obj == 2) {
@@ -442,19 +531,20 @@ void MainViewport::HandleInput(InputEvent event) {
                         }
 
                         glReadBuffer(GL_COLOR_ATTACHMENT2);
-                        glm::vec4 CurWDirPos = {0,0,0,0};
+                        glm::vec4 CurWDirPos = {0, 0, 0, 0};
 
                         glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(CurWDirPos));
 
-                        glm::vec3 GizmoDirPrePos = ProjectToRayNormalized({CurWDirPos.x,CurWDirPos.y,CurWDirPos.z},GizmoDir);
-                        glm::vec3 objpos = {SelObj->TF.Position.X,SelObj->TF.Position.Y,SelObj->TF.Position.Z};
+                        glm::vec3 GizmoDirPrePos = ProjectToRayNormalized({CurWDirPos.x, CurWDirPos.y, CurWDirPos.z},
+                                                                          GizmoDir);
+                        glm::vec3 objpos = {SelObj->TF.Position.X, SelObj->TF.Position.Y, SelObj->TF.Position.Z};
 
                         ObjBindingVec = objpos - GizmoDirPrePos;
 
                         std::cout << glm::to_string(ObjBindingVec) << std::endl;
                     }
-                } else if(CurrentGizmoType == Scale){
-                    if(0 < obj && obj <= 3 ) {
+                } else if (CurrentGizmoType == Scale) {
+                    if (0 < obj && obj <= 3) {
                         if (obj == 1) {
                             GizmoDir = {1, 0, 0};
                         } else if (obj == 2) {
@@ -465,23 +555,24 @@ void MainViewport::HandleInput(InputEvent event) {
 
                         auto TF = SelObj->TF;
 
-                        TF.Scale = {1,1,1};
-                        TF.Position = {0,0,0};
+                        TF.Scale = {1, 1, 1};
+                        TF.Position = {0, 0, 0};
 
                         auto mat = TransformToMatrix(TF);
 
-                        GizmoDir = mat * glm::vec4(GizmoDir,1);
+                        GizmoDir = mat * glm::vec4(GizmoDir, 1);
 
                         glReadBuffer(GL_COLOR_ATTACHMENT2);
-                        glm::vec4 CurWDirPos = {0,0,0,0};
+                        glm::vec4 CurWDirPos = {0, 0, 0, 0};
 
-                         glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(CurWDirPos));
+                        glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(CurWDirPos));
 
-                        glm::vec3 GizmoDirPrePos = ProjectToRayNormalized({CurWDirPos.x,CurWDirPos.y,CurWDirPos.z},GizmoDir);
+                        glm::vec3 GizmoDirPrePos = ProjectToRayNormalized({CurWDirPos.x, CurWDirPos.y, CurWDirPos.z},
+                                                                          GizmoDir);
 
                         glm::vec3 objpos = ToGlmVec3(SelObj->TF.Position);
 
-                        ObjScalingDist = glm::distance(ProjectToRayNormalized(objpos,GizmoDir), GizmoDirPrePos);
+                        ObjScalingDist = glm::distance(ProjectToRayNormalized(objpos, GizmoDir), GizmoDirPrePos);
 
                         ObjBindingVec = ToGlmVec3(SelObj->TF.Scale);
 
@@ -518,17 +609,17 @@ void MainViewport::HandleInput(InputEvent event) {
         }
             break;
         case (InputType::MouseHoldL): {
-            GLint y = event.y * frameheight;
-            GLint x = event.x * framewidth;
+            GLint y = event.y * m_internalFramebuf->getSize().y;
+            GLint x = event.x * m_internalFramebuf->getSize().x;
 
-            glBindFramebuffer(GL_FRAMEBUFFER, Framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_internalFramebuf->getId());
             glReadBuffer(GL_COLOR_ATTACHMENT1);
             unsigned int obj = 0;
 
             glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &obj);
 
             if (CurrentGizmoType == Move) {
-                if(SpecialObjCur == 0) {
+                if (SpecialObjCur == 0) {
                     return;
                 }
                 /*if(SpecialObjCur != obj){
@@ -538,8 +629,8 @@ void MainViewport::HandleInput(InputEvent event) {
 
                 auto tf = SelObj->TF;
 
-                tf.Rotation = {0,0,0};
-                tf.Scale = {1,1,1};
+                tf.Rotation = {0, 0, 0};
+                tf.Scale = {1, 1, 1};
 
                 auto Tf = TransformToMatrix(tf);
 
@@ -551,28 +642,34 @@ void MainViewport::HandleInput(InputEvent event) {
                     GizmoDir = {0, 0, 1};
                 }
 
-                auto ClipSpaceStart = (VP * Tf) * glm::vec4(0,0,0,1);
-                auto ClipSpaceEnd = (VP * Tf) * glm::vec4(GizmoDir,1);
+                auto ClipSpaceStart = (VP * Tf) * glm::vec4(0, 0, 0, 1);
+                auto ClipSpaceEnd = (VP * Tf) * glm::vec4(GizmoDir, 1);
 
-                glm::vec2 ScreenSpaceStart = {((ClipSpaceStart.x/ClipSpaceStart.w + 1 ) / 2) * framewidth, ((ClipSpaceStart.y/ClipSpaceStart.w + 1 ) / 2) * frameheight };
-                glm::vec2 ScreenSpaceEnd = {((ClipSpaceEnd.x/ClipSpaceEnd.w + 1 ) / 2) * framewidth, ((ClipSpaceEnd.y/ClipSpaceEnd.w + 1 ) / 2) * frameheight};
+                glm::vec2 ScreenSpaceStart = {
+                        ((ClipSpaceStart.x / ClipSpaceStart.w + 1) / 2) * (float)m_internalFramebuf->getSize().x,
+                        ((ClipSpaceStart.y / ClipSpaceStart.w + 1) / 2) * (float)m_internalFramebuf->getSize().y};
+                glm::vec2 ScreenSpaceEnd = {
+                        ((ClipSpaceEnd.x / ClipSpaceEnd.w + 1) / 2) * (float)m_internalFramebuf->getSize().x,
+                        ((ClipSpaceEnd.y / ClipSpaceEnd.w + 1) / 2) * (float)m_internalFramebuf->getSize().y};
 
                 glm::vec2 ScrenSpaceDir = ScreenSpaceEnd - ScreenSpaceStart;
 
-                glm::vec2 MousePos = {x,y};
+                glm::vec2 MousePos = {x, y};
 
-                glm::vec2 FixedMousePos = ProjectToRayNormDir(MousePos,ScreenSpaceStart,ScrenSpaceDir);
+                glm::vec2 FixedMousePos = ProjectToRayNormDir(MousePos, ScreenSpaceStart, ScrenSpaceDir);
 
                 //SpecialObjCur = obj;
-                if(0 < SpecialObjCur && SpecialObjCur <= 3 ) {
+                if (0 < SpecialObjCur && SpecialObjCur <= 3) {
                     glReadBuffer(GL_COLOR_ATTACHMENT2);
-                    glm::vec4 CurWDirPos = {0,0,0,0};
+                    glm::vec4 CurWDirPos = {0, 0, 0, 0};
 
-                    glReadPixels(floorf(FixedMousePos.x), floorf(FixedMousePos.y), 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(CurWDirPos));
+                    glReadPixels((int)floorf(FixedMousePos.x), (int)floorf(FixedMousePos.y), 1, 1, GL_RGBA, GL_FLOAT,
+                                 glm::value_ptr(CurWDirPos));
 
                     //std::cout << glm::to_string(CurWDirPos) << std::endl;
 
-                    auto DirProjectedTranslationPos = ProjectToRayNormalized({CurWDirPos.x,-CurWDirPos.y,CurWDirPos.z},GizmoDir);
+                    auto DirProjectedTranslationPos = ProjectToRayNormalized(
+                            {CurWDirPos.x, CurWDirPos.y, CurWDirPos.z}, GizmoDir);
 
                     if (SpecialObjCur == 1) {
                         SelObj->TF.Position.X = ObjBindingVec.x + DirProjectedTranslationPos.x;
@@ -582,19 +679,19 @@ void MainViewport::HandleInput(InputEvent event) {
                         SelObj->TF.Position.Z = ObjBindingVec.z + DirProjectedTranslationPos.z;
                     }
 
-                    glm::vec3 objpos = {SelObj->TF.Position.X,SelObj->TF.Position.Y,SelObj->TF.Position.Z};
+                    glm::vec3 objpos = {SelObj->TF.Position.X, SelObj->TF.Position.Y, SelObj->TF.Position.Z};
 
                     ObjBindingVec = objpos - DirProjectedTranslationPos;
                     lastMpos = currentMpos;
                 }
             } else if (CurrentGizmoType == Scale) {
-                if(SpecialObjCur == 0)
+                if (SpecialObjCur == 0)
                     return;
-                if(SpecialObjCur != obj){
+                if (SpecialObjCur != obj) {
                     SpecialObjCur = 0;
                     return;
                 }
-                if(0 < SpecialObjCur && SpecialObjCur <= 3 ) {
+                if (0 < SpecialObjCur && SpecialObjCur <= 3) {
                     SpecialObjCur = obj;
                     if (obj == 1) {
                         GizmoDir = {1, 0, 0};
@@ -606,15 +703,15 @@ void MainViewport::HandleInput(InputEvent event) {
 
                     auto TF = SelObj->TF;
 
-                    TF.Scale = {1,1,1};
-                    TF.Position = {0,0,0};
+                    TF.Scale = {1, 1, 1};
+                    TF.Position = {0, 0, 0};
 
                     auto mat = TransformToMatrix(TF);
 
-                    GizmoDir = mat * glm::vec4(GizmoDir,1);
+                    GizmoDir = mat * glm::vec4(GizmoDir, 1);
 
                     glReadBuffer(GL_COLOR_ATTACHMENT2);
-                    glm::vec4 CurWDirPos = {0,0,0,0};
+                    glm::vec4 CurWDirPos = {0, 0, 0, 0};
 
                     //GizmoDir = glm::normalize( * GizmoDir)
                     glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, glm::value_ptr(CurWDirPos));
@@ -623,31 +720,34 @@ void MainViewport::HandleInput(InputEvent event) {
 
                     ObjPos.y = -ObjPos.y;
 
-                    CurWDirPos -= glm::vec4(ObjPos,1);
+                    CurWDirPos -= glm::vec4(ObjPos, 1);
 
 
+                    auto DirProjectedTranslationPos = ProjectToRayNormalized(
+                            {CurWDirPos.x, CurWDirPos.y, CurWDirPos.z}, GizmoDir);
 
-                    auto DirProjectedTranslationPos = ProjectToRayNormalized({CurWDirPos.x,-CurWDirPos.y,CurWDirPos.z},GizmoDir);
-
-                    float VecComp = GetVecComponent(DirProjectedTranslationPos,GizmoDir);
+                    float VecComp = GetVecComponent(DirProjectedTranslationPos, GizmoDir);
 
                     float DeltaInDir = 0;
 
                     if (SpecialObjCur == 1) {
-                        DeltaInDir = (ObjBindingVec.x + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.x) - SelObj->TF.Scale.X;
+                        DeltaInDir = (ObjBindingVec.x + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.x) -
+                                     SelObj->TF.Scale.X;
                         SelObj->TF.Scale.X = ObjBindingVec.x + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.x;
                     } else if (SpecialObjCur == 2) {
-                        DeltaInDir = (ObjBindingVec.y + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.y) - SelObj->TF.Scale.Y;
+                        DeltaInDir = (ObjBindingVec.y + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.y) -
+                                     SelObj->TF.Scale.Y;
                         SelObj->TF.Scale.Y = ObjBindingVec.y + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.y;
                     } else if (SpecialObjCur == 3) {
-                        DeltaInDir = (ObjBindingVec.z + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.z) - SelObj->TF.Scale.Z;
+                        DeltaInDir = (ObjBindingVec.z + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.z) -
+                                     SelObj->TF.Scale.Z;
                         SelObj->TF.Scale.Z = ObjBindingVec.z + ((VecComp / ObjScalingDist) - 1) * ObjBindingVec.z;
                     }
 
-                    if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
-                        if(SpecialObjCur != 1) SelObj->TF.Scale.X += DeltaInDir;
-                        if(SpecialObjCur != 2) SelObj->TF.Scale.Y += DeltaInDir;
-                        if(SpecialObjCur != 3) SelObj->TF.Scale.Z += DeltaInDir;
+                    if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+                        if (SpecialObjCur != 1) SelObj->TF.Scale.X += DeltaInDir;
+                        if (SpecialObjCur != 2) SelObj->TF.Scale.Y += DeltaInDir;
+                        if (SpecialObjCur != 3) SelObj->TF.Scale.Z += DeltaInDir;
                     }
 
                     lastMpos = currentMpos;
@@ -665,9 +765,11 @@ void MainViewport::HandleInput(InputEvent event) {
             break;
         case (InputType::MouseHoldR):
             ImGui::SetWindowFocus();
-            camrot.x += (lastMpos.x - currentMpos.x) * (float) framewidth * .1f;
-            camrot.y -= (lastMpos.y - currentMpos.y) * (float) frameheight * .1f;
+            camrot.x += (lastMpos.x - currentMpos.x) * (float) m_internalFramebuf->getSize().x * .1f;
+            camrot.y += (lastMpos.y - currentMpos.y) * (float) m_internalFramebuf->getSize().y * .1f;
             lastMpos = currentMpos;
+            break;
+        default:
             break;
     }
 

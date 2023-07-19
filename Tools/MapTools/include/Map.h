@@ -24,6 +24,8 @@ struct Map {
 
     std::vector<Rail> Rails;
 
+    Element* GetElementById(std::string id);
+
 
 };
 

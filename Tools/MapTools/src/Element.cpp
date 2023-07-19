@@ -1,5 +1,6 @@
 #include<Element.h>
 #include<algorithm>
+#include <iomanip>
 
 Element::Element(const YAML::Node &ObjNode,std::list<std::string> PropertyBlockList) {
 
@@ -28,14 +29,14 @@ Element::Element(const YAML::Node &ObjNode,std::list<std::string> PropertyBlockL
     ModelName = ObjNode["ModelName"].as<std::string>();
     IsLinkDest = ObjNode["IsLinkDest"].as<bool>();
 
-    unsigned int ParamId = 1;
+    unsigned int ParamId = 0;
 
     while(YAML::Node ParamNode = ObjNode["Parameter" + std::to_string(ParamId)]){
         Parameters.push_back(ParamNode.as<long>());
         ParamId++;
     }
 
-    unsigned int FloatParamId = 1;
+    unsigned int FloatParamId = 0;
 
     while(YAML::Node ParamNode = ObjNode["FloatParameter" + std::to_string(FloatParamId)]){
         FloatParameters.push_back(ParamNode.as<float>());
@@ -118,12 +119,16 @@ void Element::YamlInsertBody(YAML::Emitter &Emitter) {
     }
     Emitter << YAML::EndMap;
 
-    for(int i = 1; i <= Parameters.size(); i++){
-        Emitter << YAML::Key << "Parameter" + std::to_string(i) << YAML::Value << YAML::LocalTag("l") << Parameters[i-1];
+    for(int i = 0; i < Parameters.size(); i++){
+        Emitter << YAML::Key << "Parameter" + std::to_string(i) << YAML::Value << YAML::LocalTag("l") << Parameters[i];
     }
 
-    for(int i = 1; i <= FloatParameters.size(); i++){
-        Emitter << YAML::Key << "FloatParameter" + std::to_string(i) << YAML::Value << FloatParameters[i-1];
+    for(int i = 0; i < FloatParameters.size(); i++){
+
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(5) << FloatParameters[i];
+        std::string s = stream.str();
+        Emitter << YAML::Key << "FloatParameter" + std::to_string(i) << YAML::Value << stream.str();
     }
 
     for(auto opts: OtherOptions){

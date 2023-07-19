@@ -9,7 +9,7 @@ find_package(GLEW REQUIRED)
 
 find_package(yaml-cpp REQUIRED)
 
-add_library(SpoonMapTools STATIC src/Map.cpp include/Map.h include/LevelObject.h include/Transform.h "include/Vector3.h" src/Vectior3.cpp src/Transform.cpp src/LevelObject.cpp include/Link.h src/Link.cpp include/Rail.h src/Rail.cpp include/RailPoint.h src/RailPoint.cpp include/SpecialObjectParams.h src/SpecialObjectParams.cpp include/SpecialObjectParamVersions/All.h include/SpecialObjectParamVersions/Default.h include/LayerConfig.h include/LayerConfig.h include/Element.h src/Element.cpp)
+add_library(SpoonMapTools STATIC src/Map.cpp include/Map.h include/LevelObject.h include/Transform.h "include/Vector3.h" src/Vectior3.cpp src/Transform.cpp src/LevelObject.cpp include/Link.h src/Link.cpp include/Rail.h src/Rail.cpp include/RailPoint.h src/RailPoint.cpp include/SpecialObjectParams.h src/SpecialObjectParams.cpp include/SpecialObjectParamVersions/All.h include/SpecialObjectParamVersions/Default.h  include/Element.h src/Element.cpp)
 
 target_include_directories(SpoonMapTools PUBLIC include)
 

@@ -15,8 +15,8 @@
 
 namespace Teams{
     constexpr long Player = 0;
-    constexpr long Neutral = 1;
-    constexpr long Enemy = 2;
+    constexpr long Enemy = 1;
+    constexpr long Neutral = 2;
 
     constexpr std::array<long,3> AllOptions = {Player,Neutral,Enemy};
 
@@ -25,9 +25,9 @@ namespace Teams{
             case 0:
                 return "Player";
             case 1:
-                return "Neutral";
-            case 2:
                 return "Enemy";
+            case 2:
+                return "Neutral";
             default:
                 return "Invalid";
         }

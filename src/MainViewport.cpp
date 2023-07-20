@@ -46,7 +46,7 @@ bool IsArea(const std::string& Type) {
     return false;
 }
 
-MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), VP(1.0f) {
+MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), VP(1.0f), defaultShader("ForwardPass"), flatShader("FlatForwardPass") {
 
     MainVP = this;
 
@@ -57,14 +57,14 @@ MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), 
                 {GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2},
                 {GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, GL_DEPTH_STENCIL_ATTACHMENT}
             },
-            Graphics::Shader("ForwardPass"));
+            defaultShader);
 
     SunCam = std::make_unique<Graphics::Framebuffer>(
             std::vector<Graphics::FramebufferTextureInfo>{
                     {GL_DEPTH_COMPONENT16,GL_DEPTH_COMPONENT,GL_FLOAT,GL_DEPTH_ATTACHMENT}
             },
             Graphics::Shader("ShadowPass"),
-            Math::Vector2i(16384,16384));
+            Math::Vector2i(8192,8192));
 
     auto tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
     glBindTexture(GL_TEXTURE_2D, tex.m_texture.getId());
@@ -99,10 +99,11 @@ void MainViewport::RenderRail(Rail *rail) {
 
 void MainViewport::Draw() {
 
-#ifndef NDEBUG
-    glClearColor(.2, .2, .2, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#endif
+
+    if(greenScreen) {
+        glClearColor(0, 1, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
 
     m_internalFramebuf->m_shader.use();
 
@@ -192,6 +193,16 @@ void MainViewport::Draw() {
         //ImGui::SliderFloat("Shading Effectiveness", &ShadingEffectiveness, 0, 1);
         ImGui::DragFloat3("Light Direction", &LightDir.x, 0.01);
         ImGui::Checkbox("Draw All Areas", &drawAllAreas);
+        ImGui::Checkbox("Green Screen", &greenScreen);
+        if(ImGui::Button("Switch Shading Modes")){
+            if(flatShading)
+                m_internalFramebuf->m_shader = defaultShader;
+            else
+                m_internalFramebuf->m_shader = flatShader;
+
+
+            flatShading = !flatShading;
+        }
         ImGui::EndPopup();
     }
 

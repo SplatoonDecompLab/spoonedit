@@ -22,7 +22,7 @@ public:
 
     unsigned *CopyCount;
 
-    void Draw(Transform tf, Graphics::Shader &shader, glm::mat4 VP);
+    void Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 &VP);
 
     void DrawSelection(Transform tf, Graphics::Shader &shader, glm::mat4 VP);
 protected:

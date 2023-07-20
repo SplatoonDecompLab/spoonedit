@@ -29,7 +29,15 @@ public:
 
     float shadowArea = 750.0f;
 
+    Graphics::Shader flatShader;
+    Graphics::Shader defaultShader;
+
+    bool flatShading = false;
+
+
     float fov = 90.0f;
+
+    bool greenScreen = false;
 
     //std::vector<std::vector<unsigned int>> PixelToObjNum;
 

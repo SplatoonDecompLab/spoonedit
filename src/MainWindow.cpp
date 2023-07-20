@@ -8,6 +8,7 @@
 #include<imgui.h>
 #include <IconsFontAwesome6.h>
 #include<fstream>
+#include"Config/Configs.h"
 
 MainWindow* MainWindowInst = nullptr;
 
@@ -88,12 +89,15 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
     AddMenu("Game");
     AddMenuItem("Game", "Gambit(1)", [&](){
         gameSetting = GameMode::Gambit;
+        Configs::g_loadConfigs(GameMode::ToString(gameSetting));
     });
     AddMenuItem("Game", "Blitz(2)", [&](){
         gameSetting = GameMode::Blitz;
+        Configs::g_loadConfigs(GameMode::ToString(gameSetting));
     });
     AddMenuItem("Game", "Thunder(3)", [&](){
         gameSetting = GameMode::Thunder;
+        Configs::g_loadConfigs(GameMode::ToString(gameSetting));
     });
 
     AddMenu("Object");
@@ -170,7 +174,12 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
 
     msgBoxes.push_back(new Graphics::MessageBox("Gizmos are currently broken beware of using them!"));
     //msgBoxes.
-    Graphics::EnableVsync();
+    //Graphics::EnableVsync();
+
+    Configs::g_loadConfigs("Gambit");
+
+    glfwMakeContextCurrent(GetGlfwWindow());
+    glfwSwapInterval(0);
 }
 
 void MainWindow::Update() {

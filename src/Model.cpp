@@ -82,7 +82,7 @@ Model::Model(std::string modelname)  {
     }
 }
 
-void Model::Draw(Transform tf, Graphics::Shader &shader, glm::mat4 VP) {
+void Model::Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 &VP) {
 
     unsigned int texnum = 0;
     for(auto& mesh: Meshes){

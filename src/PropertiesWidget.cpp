@@ -8,7 +8,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsFontAwesome6.h"
 #include<array>
-
+#include "Config/Configs.h"
 struct SimpleVec3{
     float x,y,z;
     template <typename t>
@@ -107,8 +107,7 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
             auto &link = *linkIter;
             if (ImGui::CollapsingHeader(("Link " + std::to_string(i) + "##" + Id).c_str())) {
                 ImGui::Indent();
-                ImGuiDrawSelection("Link Type##" + std::to_string(i) + Id, link.Name, LinkTypes.begin(), LinkTypes.end(),
-                                   [](std::string s) { return s; });
+                Configs::imguiDrawOpts("Link Type##" + std::to_string(i) + Id, Configs::g_linkOpts, link.Name);
                 ImGui::InputText(("Destination##PropWindLink" + std::to_string(i) + Id).c_str(), &link.Destination);
 
                 if(Element* gotoElem = GetMainWindow()->loadedMap.GetElementById(link.Destination)) {
@@ -172,7 +171,7 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
         if(levelObject) {
             //ImGuiDrawTeamSelect(levelObject,Id);
             ImGuiDrawSelection("Team##"+Id,levelObject->Team,Teams::AllOptions.begin(), Teams::AllOptions.end(),Teams::TeamToText);
-            ImGuiDrawSelection("Drop##"+Id,levelObject->DropId,DropId::AllOptions.begin(), DropId::AllOptions.end(),DropId::DropIdToText);
+            Configs::imguiDrawOpts("Drop##"+Id, Configs::g_dropIdOpts,levelObject->DropId);
         }
 
         if(railPoint){

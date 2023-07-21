@@ -159,10 +159,23 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
                     i++;
                 }
 
-                if(ImGui::Button((ICON_FA_PLUS "##" + Id).c_str())) {
-                    RailPoint rp = RailPoint(rail->Points.back());
-                    rp.runtimeID = rand();
-                    rail->Points.push_back(rp);
+
+                if(rail->Points.size() != 1) {
+                    if (ImGui::Button((ICON_FA_PLUS "##" + Id).c_str())) {
+                        RailPoint rp = RailPoint(rail->Points.back());
+                        rp.runtimeID = rand();
+                        rail->Points.push_back(rp);
+                    }
+                }
+
+                if(rail->Points.empty()){
+                    auto& map = GetMainWindow()->loadedMap;
+
+                    std::erase_if(map.Rails,[&](const Rail& rail1){
+                        return rail1.runtimeID == rail->runtimeID;
+                    });
+
+                    GetMainWindow()->selectedElem = nullptr;
                 }
                 ImGui::Unindent();
             }

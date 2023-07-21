@@ -19,7 +19,7 @@ namespace Configs {
         std::string m_display;
     };
 
-    inline void imguiDrawOpts(std::string id,std::vector<std::string> opts,std::string &val){
+    inline void g_imguiDrawOpts(std::string id, std::vector<std::string> opts, std::string &val){
         if(ImGui::BeginCombo(id.c_str(),val.c_str())){
              for(const std::string &opt: opts) {
                  if (ImGui::Selectable((opt + "##" + id).c_str()))
@@ -31,7 +31,7 @@ namespace Configs {
     }
 
     template<typename t>
-    inline void imguiDrawOpts(std::string id,std::vector<ValueDisplayOptions<t>> opts,t &val){
+    void g_imguiDrawOpts(std::string id, std::vector<ValueDisplayOptions<t>> opts, t &val){
         auto selOpt = std::find_if(opts.begin(), opts.end(),[&](const ValueDisplayOptions<t> &opt){
             return val == opt.m_val;
         });

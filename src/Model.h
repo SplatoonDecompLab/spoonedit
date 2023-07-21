@@ -16,18 +16,16 @@ class Model {
 public:
     Model(std::string modelName);
 
-    Model(const Model& mdl);
+    Model(const Model& mdl) = delete;
 
-    ~Model();
-
-    unsigned *CopyCount;
+    Model(Model&&) = default;
 
     void Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 &VP);
 
     void DrawSelection(Transform tf, Graphics::Shader &shader, glm::mat4 VP);
 protected:
-    std::list<Graphics::Mesh*> Meshes;
-    std::vector<Graphics::Material*> Materials;
+    std::list<std::unique_ptr<Graphics::Mesh>> Meshes;
+    std::vector<std::unique_ptr<Graphics::Material>> Materials;
 
     //std::map<std::string,Graphics::Texture> TexturesForName;
 };

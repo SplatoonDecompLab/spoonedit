@@ -18,8 +18,6 @@
 #include<glm/vec2.hpp>
 
 Model::Model(std::string modelname)  {
-    CopyCount = new unsigned(1);
-
     auto modeltoload = boost::filesystem::current_path() / "Models" / modelname / (modelname + ".dae");
 
     Assimp::Importer importer;
@@ -42,7 +40,7 @@ Model::Model(std::string modelname)  {
         auto mesh = scene->mMeshes[i];
         auto mat = scene->mMaterials[mesh->mMaterialIndex];
 
-        Materials.push_back(new Graphics::Material(mat,boost::filesystem::current_path() / "Models" / modelname));
+        Materials.push_back(std::make_unique<Graphics::Material>(mat,boost::filesystem::current_path() / "Models" / modelname));
 
         auto vertices = std::vector<glm::vec3>();
         auto texcoords = std::vector<glm::vec2>();
@@ -78,7 +76,7 @@ Model::Model(std::string modelname)  {
                 indices.push_back(mesh->mFaces[i3].mIndices[i4]);
         }
 
-        Meshes.push_back(new Graphics::Mesh(vertices,indices,texcoords,normals,tangents,bitangents));
+        Meshes.push_back(std::make_unique<Graphics::Mesh>(vertices,indices,texcoords,normals,tangents,bitangents));
     }
 }
 
@@ -119,7 +117,7 @@ void Model::Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 
         GLuint RotationMatrixID = shader.getUniformLocation("NormalRotationMatrix");
         glUniformMatrix4fv(RotationMatrixID,1,GL_FALSE,&nrmRotationMatrix[0][0]);
 
-        mesh->Draw(Materials[texnum]);
+        mesh->Draw(*Materials[texnum]);
         texnum++;
     }
 
@@ -153,31 +151,13 @@ void Model::DrawSelection(Transform tf, Graphics::Shader &shader, glm::mat4 VP) 
         GLuint MatrixNoYInvID = shader.getUniformLocation("TransformationMatrixNoYInv");
         glUniformMatrix4fv(MatrixNoYInvID,1,GL_FALSE,&noYInvertMatrix[0][0]);
 
-
-
-        mesh->Draw(Materials[texnum]);
+        mesh->Draw(*Materials[texnum]);
         texnum++;
     }
 
 
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
-}
-
-Model::~Model() {
-    (*CopyCount)--;
-
-    if((*CopyCount) == 0) {
-        for (Graphics::Material *mat: Materials)
-            delete mat;
-
-        for (Graphics::Mesh *mesh: Meshes)
-            delete mesh;
-    }
-}
-
-Model::Model(const Model &mdl): CopyCount(mdl.CopyCount), Meshes(mdl.Meshes), Materials(mdl.Materials) {
-    (*CopyCount)++;
 }
 
 

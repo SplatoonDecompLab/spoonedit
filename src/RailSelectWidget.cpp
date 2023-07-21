@@ -41,7 +41,7 @@ void RailSelectWidget::Draw() {
     if(ImGui::Button(ICON_FA_PLUS)){
         wind->selectedElem = nullptr;
 
-        auto vp = GetMainViewport();
+        auto vp = g_getMainViewport();
         Vector3 pos = {vp->camPos.x, -vp->camPos.y, vp->camPos.z};
         wind->loadedMap.Rails.emplace_back(pos);
     }

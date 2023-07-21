@@ -8,8 +8,9 @@
 #include<imgui.h>
 #include "IconsFontAwesome6.h"
 #include "glm/gtx/string_cast.hpp"
-
+#include<algorithm>
 #include<cmath>
+#include"Config/Configs.h"
 
 MainViewport *MainVP;
 
@@ -32,18 +33,9 @@ glm::vec3 ToGlmVec3(Vector3 Vec3) {
 }
 
 bool IsArea(const std::string& Type) {
-    if (Type == "Area" ||
-        Type == "Area_Yellow" ||
-        Type == "Area_Pink" ||
-        Type == "StageArea" ||
-        Type == "GeneralArea" ||
-        Type == "PaintedArea" ||
-        Type == "GachihokoHikikomoriArea" ||
-        Type == "GachihokoHikikomoriArea2" ||
-        Type == "SearchableArea" ||
-        Type == "PaintTargetArea")
-        return true;
-    return false;
+    return std::any_of(Configs::g_areas.begin(), Configs::g_areas.end(),[&](const std::string &areatype){
+        return Type == areatype;
+    });
 }
 
 MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), VP(1.0f), defaultShader("ForwardPass"), flatShader("FlatForwardPass") {
@@ -66,8 +58,8 @@ MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), 
             Graphics::Shader("ShadowPass"),
             Math::Vector2i(8192,8192));
 
-    auto tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
-    glBindTexture(GL_TEXTURE_2D, tex.m_texture.getId());
+    auto& tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
+    glBindTexture(GL_TEXTURE_2D, tex.m_texture->getId());
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -281,8 +273,8 @@ void MainViewport::Draw() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
-    auto tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
-    tex.m_texture.setActive(5);
+    auto &tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
+    tex.m_texture->setActive(5);
 
     GLint SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
 
@@ -857,6 +849,30 @@ glm::vec2 MainViewport::CalcGizmoDir(glm::vec3 dir) {
     return DirPosVPSpace - ObjPosVPSpace;
 }
 
-MainViewport *GetMainViewport() {
+void MainViewport::clearModels() {
+    MdlFromObj.clear();
+}
+
+void MainViewport::cleanUnnescessary() {
+    auto &map = GetMainWindow()->loadedMap;
+
+    for(auto mdlPairIter = MdlFromObj.begin(); mdlPairIter != MdlFromObj.end(); ){
+        auto nextiter = mdlPairIter;
+        nextiter++;
+
+        if(nextiter == MdlFromObj.end())
+            break;
+
+        if(std::none_of(map.Objects.begin(), map.Objects.end(),[&](const LevelObject &obj){
+            return obj.Type == nextiter->first;
+        })){
+            MdlFromObj.erase(nextiter);
+        } else {
+            mdlPairIter = nextiter;
+        }
+    }
+}
+
+MainViewport *g_getMainViewport() {
     return MainVP;
 }

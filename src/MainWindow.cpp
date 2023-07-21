@@ -30,7 +30,10 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
 
     auto mapSelectSaveExplorer = addWidget(new Graphics::FileSelectDialog("Select/Save Map", {".yaml"},[&](boost::filesystem::path path){
         selectedElem = nullptr;
-        loadedMap = ConvertFromYaml(path);
+        GetMainWindow()->loadedMap = ConvertFromYaml(path);
+
+        MainViewport* vp = g_getMainViewport();
+        vp->cleanUnnescessary();
     },[&](boost::filesystem::path path){
         loadedMap.Export(path);
     }));
@@ -90,6 +93,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
     AddMenuItem("Game", "Gambit(1)", [&](){
         gameSetting = GameMode::Gambit;
         Configs::g_loadConfigs(GameMode::ToString(gameSetting));
+        g_getMainViewport()->clearModels();
     });
     AddMenuItem("Game", "Blitz(2)", [&](){
         gameSetting = GameMode::Blitz;

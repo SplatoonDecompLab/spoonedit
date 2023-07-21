@@ -27,6 +27,11 @@ public:
     glm::vec3 camPos = glm::vec3(0,0,0);
     glm::vec2 camrot = glm::vec2(0,0);
 
+    void clearModels();
+
+    void cleanUnnescessary();
+private:
+
     float shadowArea = 750.0f;
 
     Graphics::Shader flatShader;
@@ -46,7 +51,7 @@ public:
 
     GizmoType CurrentGizmoType = Move;
 
-private:
+
 
     unsigned int HoveredObjId = 0;
 
@@ -77,6 +82,6 @@ private:
 };
 
 
-MainViewport* GetMainViewport();
+MainViewport* g_getMainViewport();
 
 #endif //SPOONTOOL_MAINVIEWPORT_H

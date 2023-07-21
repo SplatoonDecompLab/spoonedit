@@ -107,7 +107,7 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
             auto &link = *linkIter;
             if (ImGui::CollapsingHeader(("Link " + std::to_string(i) + "##" + Id).c_str())) {
                 ImGui::Indent();
-                Configs::imguiDrawOpts("Link Type##" + std::to_string(i) + Id, Configs::g_linkOpts, link.Name);
+                Configs::g_imguiDrawOpts("Link Type##" + std::to_string(i) + Id, Configs::g_linkOpts, link.Name);
                 ImGui::InputText(("Destination##PropWindLink" + std::to_string(i) + Id).c_str(), &link.Destination);
 
                 if(Element* gotoElem = GetMainWindow()->loadedMap.GetElementById(link.Destination)) {
@@ -171,7 +171,7 @@ void ImGuiDrawElem(Element* elem,std::string Id = ""){
         if(levelObject) {
             //ImGuiDrawTeamSelect(levelObject,Id);
             ImGuiDrawSelection("Team##"+Id,levelObject->Team,Teams::AllOptions.begin(), Teams::AllOptions.end(),Teams::TeamToText);
-            Configs::imguiDrawOpts("Drop##"+Id, Configs::g_dropIdOpts,levelObject->DropId);
+            Configs::g_imguiDrawOpts("Drop##" + Id, Configs::g_dropIdOpts, levelObject->DropId);
         }
 
         if(railPoint){

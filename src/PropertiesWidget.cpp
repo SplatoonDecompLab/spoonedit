@@ -188,8 +188,8 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
 
         if (levelObject) {
             //ImGuiDrawTeamSelect(levelObject,Id);
-            ImGuiDrawSelection("Team##" + Id, levelObject->Team, Teams::AllOptions.begin(), Teams::AllOptions.end(),
-                               Teams::TeamToText);
+            Configs::g_imguiDrawOpts("Team##" + Id, Configs::g_teams, levelObject->Team);
+
             Configs::g_imguiDrawOpts("Drop##" + Id, Configs::g_dropIdOpts, levelObject->DropId);
         }
 

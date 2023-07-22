@@ -4,7 +4,6 @@ project(SpoonTool)
 set (CMAKE_CXX_STANDARD 20)
 
 find_package(Boost REQUIRED COMPONENTS thread chrono)
-find_package(Lua REQUIRED)
 
 add_subdirectory(deps/vgcore)
 

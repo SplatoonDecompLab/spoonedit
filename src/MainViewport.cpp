@@ -3,7 +3,6 @@
 //
 
 #include "MainViewport.h"
-#include "MainWindow.h"
 #include <glm/ext.hpp>
 #include<imgui.h>
 #include "IconsFontAwesome6.h"
@@ -11,6 +10,8 @@
 #include<algorithm>
 #include<cmath>
 #include"Config/Configs.h"
+#include "InstanceVars.h"
+#include<virintox/gcore/Graphics.h>
 
 MainViewport *MainVP;
 
@@ -36,6 +37,10 @@ bool IsArea(const std::string& Type) {
     return std::any_of(Configs::g_areas.begin(), Configs::g_areas.end(),[&](const std::string &areatype){
         return Type == areatype;
     });
+}
+
+MENU_ITEM_DISPLAY(Widgets,Viewport,ICON_FA_VIDEO " Viewport"){
+    Graphics::window->WidgetByName.find("Main Viewport")->second->Active ^= true;
 }
 
 MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), VP(1.0f), defaultShader("ForwardPass"), flatShader("FlatForwardPass") {
@@ -213,9 +218,6 @@ void MainViewport::Draw() {
 
     glUniform4f(ObjColPos, 1, 1, 1, 1);
 
-
-    auto &map = GetMainWindow()->loadedMap;
-
     glDrawBuffer(GL_COLOR_ATTACHMENT1);
     GLuint ClearID[] = {0};
     glClearBufferuiv(GL_COLOR, 0, ClearID);
@@ -251,7 +253,7 @@ void MainViewport::Draw() {
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        for (auto &obj: map.Objects) {
+        for (auto &obj: loadedMap.Objects) {
             if (IsArea(obj.Type)) {
                 continue;
             }
@@ -298,7 +300,7 @@ void MainViewport::Draw() {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 
-    for (auto &obj: map.Objects) {
+    for (auto &obj: loadedMap.Objects) {
         if(!flatShading)
             glUniform1i(TeamId,(GLint)obj.Team);
 
@@ -327,19 +329,19 @@ void MainViewport::Draw() {
         auto &mdl = MdlFromObj.find(obj.Type)->second;
         glUniform1ui(ObjIdPos, ObjID);
 
-        if (&obj == GetMainWindow()->selectedElem)
+        if (&obj == selectedElem)
             glUniform4f(ObjColPos, 1, .7, .7, 1);
 
         mdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
-        if (&obj == GetMainWindow()->selectedElem)
+        if (&obj == selectedElem)
             glUniform4f(ObjColPos, 1, 1, 1, 1);
 
         ObjID++;
     }
 
 
-    if (GetMainWindow()->selectedElem != nullptr) {
-        auto selobj = GetMainWindow()->selectedElem;
+    if (selectedElem != nullptr) {
+        auto selobj = selectedElem;
         glUniform1ui(ObjIdPos, 0);
 
         if (IsArea(selobj->Type)) {
@@ -350,8 +352,8 @@ void MainViewport::Draw() {
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        for (Link &link: GetMainWindow()->selectedElem->Links) {
-            Element *elem = GetMainWindow()->loadedMap.GetElementById(link.Destination);
+        for (Link &link: selectedElem->Links) {
+            Element *elem = loadedMap.GetElementById(link.Destination);
             if (elem == nullptr)
                 continue;
 
@@ -360,7 +362,7 @@ void MainViewport::Draw() {
             }
         }
 
-        if (Rail *rail = dynamic_cast<Rail *>(GetMainWindow()->selectedElem)) {
+        if (Rail *rail = dynamic_cast<Rail *>(selectedElem)) {
             RenderRail(rail);
         }
 
@@ -513,7 +515,7 @@ void MainViewport::HandleInput(InputEvent event) {
     static glm::vec3 GizmoDir = glm::vec3(1, 1, 1);
     static unsigned int SpecialObjCur = 0;
 
-    auto SelObj = GetMainWindow()->selectedElem;
+    auto SelObj = selectedElem;
 
     switch (event.EventType) {
         case (InputType::MouseHover): {
@@ -622,7 +624,7 @@ void MainViewport::HandleInput(InputEvent event) {
 
             obj -= 16;
 
-            GetMainWindow()->selectedElem = &GetMainWindow()->loadedMap.Objects[obj];
+            selectedElem = &loadedMap.Objects[obj];
         }
             break;
         case (InputType::MouseHoldL): {
@@ -837,14 +839,12 @@ void MainViewport::DrawOver() {
 
 glm::vec2 MainViewport::CalcGizmoDir(glm::vec3 dir) {
 
-    auto SelObj = GetMainWindow()->selectedElem;
-
 
     auto DirPos = glm::vec4(dir, 1);
     auto ObjPos = glm::vec4(0, 0, 0, 1);
 
 
-    auto tf = SelObj->TF;
+    auto tf = selectedElem->TF;
 
     tf.Rotation = {0, 0, 0};
     tf.Scale = {1, 1, 1};
@@ -868,8 +868,6 @@ void MainViewport::clearModels() {
 }
 
 void MainViewport::cleanUnnescessary() {
-    auto &map = GetMainWindow()->loadedMap;
-
     for(auto mdlPairIter = MdlFromObj.begin(); mdlPairIter != MdlFromObj.end(); ){
         auto nextiter = mdlPairIter;
         nextiter++;
@@ -877,7 +875,7 @@ void MainViewport::cleanUnnescessary() {
         if(nextiter == MdlFromObj.end())
             break;
 
-        if(std::none_of(map.Objects.begin(), map.Objects.end(),[&](const LevelObject &obj){
+        if(std::none_of(loadedMap.Objects.begin(), loadedMap.Objects.end(),[&](const LevelObject &obj){
             return obj.Type == nextiter->first;
         })){
             MdlFromObj.erase(nextiter);
@@ -890,3 +888,5 @@ void MainViewport::cleanUnnescessary() {
 MainViewport *g_getMainViewport() {
     return MainVP;
 }
+
+REGISTERVCLASS(MainViewport)

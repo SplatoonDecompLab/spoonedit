@@ -10,6 +10,7 @@
 
 class RailSelectWidget: public Graphics::Widget {
 public:
+    VCLASS(RailSelectWidget,ESC({&Graphics::Widget::classInfo,nullptr}))
     RailSelectWidget();
 
     void Draw() override;

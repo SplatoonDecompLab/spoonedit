@@ -10,6 +10,7 @@
 
 class ObjectSelectWidget: public Graphics::Widget {
 public:
+    VCLASS(ObjectSelectWidget,ESC({&Graphics::Widget::classInfo,nullptr}))
     ObjectSelectWidget();
 
 private:

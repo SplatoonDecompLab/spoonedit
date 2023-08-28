@@ -3,14 +3,20 @@
 //
 
 #include "ObjectSelectWidget.h"
-#include "MainWindow.h"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "boost/filesystem.hpp"
 #include<iostream>
 #include<fstream>
+#include"InstanceVars.h"
+#include<virintox/gcore/Graphics.h>
+#include "IconsFontAwesome6.h"
 
 ObjectSelectWidget* ObjectSelectWidgetInstance = nullptr;
+
+MENU_ITEM_DISPLAY(Widgets,Objects,ICON_FA_CUBES " Objects"){
+    Graphics::window->WidgetByName.find("Objects")->second->Active ^= true;
+}
 
 
 ObjectSelectWidget::ObjectSelectWidget(): Graphics::Widget("Object Select",true) {
@@ -18,16 +24,14 @@ ObjectSelectWidget::ObjectSelectWidget(): Graphics::Widget("Object Select",true)
 }
 
 void ObjectSelectWidget::Draw() {
-    auto wind = GetMainWindow();
-
     static unsigned int counter = 0;
     counter = 0;
 
-    for(auto &obj: wind->loadedMap.Objects){
+    for(auto &obj: loadedMap.Objects){
 
 
-        if(ImGui::Selectable((obj.Name + ": " + obj.Type + "##" + std::to_string(obj.runtimeID)).c_str(),wind->selectedElem == &obj)){
-            wind->selectedElem = &obj;
+        if(ImGui::Selectable((obj.Name + ": " + obj.Type + "##" + std::to_string(obj.runtimeID)).c_str(),selectedElem == &obj)){
+            selectedElem = &obj;
         }
 
         if(ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsItemHovered()){
@@ -39,16 +43,16 @@ void ObjectSelectWidget::Draw() {
 
             if(ImGui::MenuItem((std::string("Delete##: ObjSelect ") + std::to_string(obj.runtimeID)).c_str())){
                 std::cout << "Deleting " + obj.Name << std::endl;
-                wind->loadedMap.Objects.erase(wind->loadedMap.Objects.begin()+counter);
-                wind->selectedElem = nullptr;
+                loadedMap.Objects.erase(loadedMap.Objects.begin()+counter);
+                selectedElem = nullptr;
             }
 
             if(ImGui::MenuItem((std::string("Duplicate##: ObjSelect ") + std::to_string(obj.runtimeID)).c_str())){
                 LevelObject dublObj = LevelObject(obj);
                 dublObj.runtimeID = rand();
 
-                wind->loadedMap.Objects.emplace_back(dublObj);
-                wind->selectedElem = nullptr;
+                loadedMap.Objects.emplace_back(dublObj);
+                selectedElem = nullptr;
             }
 
             if(ImGui::MenuItem((std::string("Export##: ObjSelect ") + std::to_string(obj.runtimeID)).c_str())){
@@ -73,3 +77,5 @@ void ObjectSelectWidget::Draw() {
 ObjectSelectWidget* GetObjectSelectWidget(){
     return ObjectSelectWidgetInstance;
 }
+
+REGISTERVCLASS(ObjectSelectWidget)

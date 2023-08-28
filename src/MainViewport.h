@@ -22,6 +22,7 @@ enum GizmoType{
 
 class MainViewport : public Graphics::ViewportWidget {
 public:
+    VCLASS(MainViewport,ESC({&Graphics::ViewportWidget::classInfo,nullptr}))
     MainViewport();
 
     glm::vec3 camPos = glm::vec3(0,0,0);

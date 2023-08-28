@@ -9,11 +9,15 @@ add_subdirectory(deps/vgcore)
 
 add_subdirectory(Tools/MapTools)
 
-add_executable(SpoonEdit src/main.cpp src/MainWindow.cpp src/MainWindow.h src/PropertiesWidget.cpp src/PropertiesWidget.h src/ObjectSelectWidget.cpp src/ObjectSelectWidget.h src/MainViewport.cpp src/MainViewport.h src/Model.cpp src/Model.h src/RailSelectWidget.cpp src/RailSelectWidget.h src/Config/Configs.h src/Config/Configs.cpp)
+add_executable(SpoonEdit src/main.cpp src/PropertiesWidget.cpp src/PropertiesWidget.h src/ObjectSelectWidget.cpp src/ObjectSelectWidget.h src/MainViewport.cpp src/MainViewport.h src/Model.cpp src/Model.h src/RailSelectWidget.cpp src/RailSelectWidget.h src/Config/Configs.h src/Config/Configs.cpp
+        src/InstanceVars.h
+        src/Objects.cpp)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 target_link_libraries(SpoonEdit PUBLIC GCore SpoonMapTools Boost::thread Boost::chrono)
+
+target_compile_definitions(SpoonEdit PRIVATE VMIRROR_ASSEMBLYNAME="SpoonEdit")
 
 install(TARGETS SpoonEdit
         CONFIGURATIONS Debug

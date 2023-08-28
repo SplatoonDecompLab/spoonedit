@@ -3,12 +3,17 @@
 //
 
 #include "PropertiesWidget.h"
-#include "MainWindow.h"
 #include<imgui.h>
 #include "misc/cpp/imgui_stdlib.h"
-#include "IconsFontAwesome6.h"
 #include<array>
 #include "Config/Configs.h"
+#include<Transform.h>
+#include<Element.h>
+#include<Rail.h>
+#include<LevelObject.h>
+#include"InstanceVars.h"
+#include<virintox/gcore/Graphics.h>
+#include "IconsFontAwesome6.h"
 
 struct SimpleVec3 {
     float x, y, z;
@@ -29,6 +34,10 @@ struct SimpleVec3 {
 };
 
 PropertiesWidget *PropertiesWidgetInst = nullptr;
+
+MENU_ITEM_DISPLAY(Widgets,Properties,ICON_FA_CLIPBOARD_LIST " Properties"){
+    Graphics::window->WidgetByName.find("Properties")->second->Active ^= true;
+}
 
 template<typename t, typename iter, typename stringConv>
 void ImGuiDrawSelection(std::string id, t &val, iter optsBegin, iter optsEnd, stringConv convert) {
@@ -115,10 +124,10 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
                 Configs::g_imguiDrawOpts("Link Type##" + std::to_string(i) + Id, Configs::g_linkOpts, link.Name);
                 ImGui::InputText(("Destination##PropWindLink" + std::to_string(i) + Id).c_str(), &link.Destination);
 
-                if (Element *gotoElem = GetMainWindow()->loadedMap.GetElementById(link.Destination)) {
+                if (Element *gotoElem = loadedMap.GetElementById(link.Destination)) {
                     ImGui::SameLine();
                     if (ImGui::Button((ICON_FA_CHEVRON_RIGHT + std::string("##GotoDest") + std::to_string(i)).c_str())) {
-                        GetMainWindow()->selectedElem = gotoElem;
+                        selectedElem = gotoElem;
                     }
                 }
 
@@ -174,13 +183,13 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
                 }
 
                 if (rail->Points.empty()) {
-                    auto &map = GetMainWindow()->loadedMap;
+                    auto &map = loadedMap;
 
                     std::erase_if(map.Rails, [&](const Rail &rail1) {
                         return rail1.runtimeID == rail->runtimeID;
                     });
 
-                    GetMainWindow()->selectedElem = nullptr;
+                    selectedElem = nullptr;
                 }
                 ImGui::Unindent();
             }
@@ -267,17 +276,17 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
 PropertiesWidget::PropertiesWidget() : Graphics::Widget("Properties", true) {
     PropertiesWidgetInst = this;
 
-    GetMainWindow()->selectedElem = nullptr;
+    selectedElem = nullptr;
 }
 
 void PropertiesWidget::Draw() {
-    auto wind = GetMainWindow();
-
-    if (wind->selectedElem != nullptr) {
-        ImGuiDrawElem(wind->selectedElem);
+    if (selectedElem != nullptr) {
+        ImGuiDrawElem(selectedElem);
     }
 }
 
 PropertiesWidget *GetPropertiesWidget() {
     return PropertiesWidgetInst;
 }
+
+REGISTERVCLASS(PropertiesWidget)

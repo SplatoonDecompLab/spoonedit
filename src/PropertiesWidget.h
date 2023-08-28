@@ -10,6 +10,7 @@
 
 class PropertiesWidget : public Graphics::Widget {
 public:
+    VCLASS(PropertiesWidget,ESC({&Graphics::Widget::classInfo,nullptr}))
     PropertiesWidget();
 
     void Draw() override;

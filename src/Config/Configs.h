@@ -50,6 +50,7 @@ namespace Configs {
     inline std::vector<std::string> g_areas;
     inline std::vector<ValueDisplayOptions<long>> g_dropIdOpts;
     inline std::vector<ValueDisplayOptions<long>> g_teams;
+    inline std::vector<ValueDisplayOptions<std::string>> g_layers;
 
 
 

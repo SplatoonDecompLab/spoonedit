@@ -37,6 +37,7 @@ namespace Configs {
         g_areas = loadStringListConfig(gameCfgPath / "Areas.yaml");
         g_dropIdOpts = loadValueDisplayConfig<long>(gameCfgPath / "DropIds.yaml");
         g_teams = loadValueDisplayConfig<long>(gameCfgPath / "Teams.yaml");
+        g_layers = loadValueDisplayConfig<std::string>(gameCfgPath / "Layers.yaml");
     }
 
 

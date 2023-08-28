@@ -91,19 +91,13 @@ void Model::Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 
         glm::vec3 scale(tf.Scale.X,tf.Scale.Y,tf.Scale.Z);
 
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1),glm::vec3(pos.x,pos.y,pos.z));
-        glm::mat4 translationNoYInvertMatrix = glm::translate(glm::mat4(1),glm::vec3(pos.x,pos.y,pos.z));
         glm::mat4 rotationMatrixZ = glm::rotate(glm::mat4(1),glm::radians(rot.z), glm::vec3(0,0,1));
         glm::mat4 rotationMatrixY = glm::rotate(rotationMatrixZ,glm::radians(rot.y), glm::vec3(0,1,0));
         glm::mat4 rotationMatrix = glm::rotate(rotationMatrixY,glm::radians(rot.x), glm::vec3(1,0,0));
-
-        glm::mat4 nrmRotationMatrixZ = glm::rotate(glm::mat4(1),glm::radians(normalRot.z), glm::vec3(0,0,1));
-        glm::mat4 nrmRotationMatrixY = glm::rotate(nrmRotationMatrixZ,glm::radians(normalRot.y), glm::vec3(0,1,0));
-        glm::mat4 nrmRotationMatrix = glm::rotate(nrmRotationMatrixY,glm::radians(normalRot.x), glm::vec3(1,0,0));
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1),scale);
 
         glm::mat4 matrix = VP * translationMatrix * rotationMatrix * scaleMatrix;
         glm::mat4 ModelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
-        glm::mat4 noYInvertMatrix = translationNoYInvertMatrix * nrmRotationMatrix * scaleMatrix;
 
         GLuint MatrixID = shader.getUniformLocation("MVP");
         glUniformMatrix4fv(MatrixID,1,GL_FALSE,&matrix[0][0]);
@@ -111,16 +105,12 @@ void Model::Draw(const Transform &tf, Graphics::Shader &shader, const glm::mat4 
         GLuint ModelMatrixID = shader.getUniformLocation("ModelMatrix");
         glUniformMatrix4fv(ModelMatrixID,1,GL_FALSE,&ModelMatrix[0][0]);
 
-        GLuint MatrixNoYInvID = shader.getUniformLocation("TransformationMatrixNoYInv");
-        glUniformMatrix4fv(MatrixNoYInvID,1,GL_FALSE,&noYInvertMatrix[0][0]);
-
         GLuint RotationMatrixID = shader.getUniformLocation("NormalRotationMatrix");
-        glUniformMatrix4fv(RotationMatrixID,1,GL_FALSE,&nrmRotationMatrix[0][0]);
+        glUniformMatrix4fv(RotationMatrixID,1,GL_FALSE,&rotationMatrix[0][0]);
 
         mesh->Draw(*Materials[texnum]);
         texnum++;
     }
-
 }
 
 void Model::DrawSelection(Transform tf, Graphics::Shader &shader, glm::mat4 VP) {

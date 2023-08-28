@@ -24,7 +24,7 @@ Element::Element(const YAML::Node &ObjNode,std::list<std::string> PropertyBlockL
     TF.Rotation = ObjNode["Rotate"];
     TF.Scale = ObjNode["Scale"];
 
-    Layer = ToLayerConfig(ObjNode["LayerConfigName"].as<std::string>());
+    Layer = ObjNode["LayerConfigName"].as<std::string>();
 
     ModelName = ObjNode["ModelName"].as<std::string>();
     IsLinkDest = ObjNode["IsLinkDest"].as<bool>();
@@ -89,7 +89,7 @@ void Element::YamlInsertBody(YAML::Emitter &Emitter) {
 
     Emitter << YAML::Key << "UnitConfigName" << YAML::Value << Type;
 
-    Emitter << YAML::Key << "LayerConfigName" << YAML::Value << ToStringYaml(Layer);
+    Emitter << YAML::Key << "LayerConfigName" << YAML::Value << Layer;
     if(ModelName == "null") {
         Emitter << YAML::Key << "ModelName" << YAML::Value << YAML::LowerNull << YAML::Null;
     } else {

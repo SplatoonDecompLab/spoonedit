@@ -44,7 +44,7 @@ void ImGuiDrawSelection(std::string id, t &val, iter optsBegin, iter optsEnd, st
 
 }
 
-template<typename t>
+/*template<typename t>
 void ImGuiDrawLayer(t *obj) {
     if (ImGui::BeginCombo("Layer##PropWind", ToString(obj->Layer).c_str())) {
         if (ImGui::Selectable("Common##TeamsPropWind"))
@@ -65,7 +65,7 @@ void ImGuiDrawLayer(t *obj) {
             obj->Layer = Temporary;
         ImGui::EndCombo();
     }
-};
+};*/
 
 void ImGuiDrawTransform(Transform &tf, std::string id) {
     ImGui::Text("Transform:");
@@ -103,7 +103,7 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
     ImGui::InputText(("##PropWindInputType" + Id).c_str(), &elem->Type);
     ImGui::PopItemWidth();
     ImGuiDrawTransform(elem->TF, "PropWind" + Id);
-    ImGuiDrawLayer(elem);
+    Configs::g_imguiDrawOpts("Layer##" + Id, Configs::g_layers, elem->Layer);
     ImGui::Checkbox(("Is Link Destination?##PropWindowIsLinkDest" + Id).c_str(), &elem->IsLinkDest);
     if (ImGui::CollapsingHeader(("Links##" + Id).c_str())) {
         ImGui::Indent();
@@ -117,7 +117,7 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
 
                 if (Element *gotoElem = GetMainWindow()->loadedMap.GetElementById(link.Destination)) {
                     ImGui::SameLine();
-                    if (ImGui::Button(ICON_FA_CHEVRON_RIGHT)) {
+                    if (ImGui::Button((ICON_FA_CHEVRON_RIGHT + std::string("##GotoDest") + std::to_string(i)).c_str())) {
                         GetMainWindow()->selectedElem = gotoElem;
                     }
                 }
@@ -144,7 +144,7 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
             ImGui::Checkbox(("Is Closed?##" + Id).c_str(), &rail->IsClosed);
             ImGui::Checkbox(("Is Ladder?##" + Id).c_str(), &rail->IsLadder);
             ImGui::InputInt(("Priority?##" + Id).c_str(), (int *) &rail->Priority);
-            ImGuiDrawSelection("Rail Type", rail->RailType, AllRailTypeOptions.begin(), AllRailTypeOptions.end(),
+            ImGuiDrawSelection("Rail Type", rail->m_railType, AllRailTypeOptions.begin(), AllRailTypeOptions.end(),
                                [](RailType t) { return ToString(t); });
             if (ImGui::CollapsingHeader(("Rail Points##" + Id).c_str())) {
                 ImGui::Indent();

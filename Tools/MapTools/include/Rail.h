@@ -43,7 +43,7 @@ struct Rail: public Element{
 
     std::list<RailPoint> Points = std::list<RailPoint>();
 
-    RailType RailType = Linear;
+    RailType m_railType = RailType::Linear;
     bool IsClosed = false;
     bool IsLadder = false;
     long Priority = 100;

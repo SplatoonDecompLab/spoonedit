@@ -126,7 +126,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                 ObjCpy.TF.Rotation = {0, 0, 0};
                 ObjCpy.TF.Position = {0, 0, 0};
 
-                for(long &param: ObjCpy.Parameters){
+                for(int &param: ObjCpy.Parameters){
                     param = -99;
                 }
 
@@ -134,7 +134,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                     param = -99.0f;
                 }
 
-                ObjCpy.Layer = Common;
+                ObjCpy.Layer = "Cmn";
 
                 ExportObj(ObjCpy);
             }
@@ -156,7 +156,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                    ObjCpy.Name = ObjCpy.Type;
                    ObjCpy.Links = std::vector<Link>();
 
-                   for(long &param: ObjCpy.Parameters){
+                   for(int &param: ObjCpy.Parameters){
                        param = -99;
                    }
 
@@ -164,7 +164,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
                        param = -99.0f;
                    }
 
-                   ObjCpy.Layer = Common;
+                   ObjCpy.Layer = "Cmn";
 
                    ObjCpy.TF.Scale = {1, 1, 1};
                    ObjCpy.TF.Rotation = {0, 0, 0};
@@ -182,8 +182,7 @@ MainWindow::MainWindow(): Graphics::Window("SpoonEdit") {
 
     Configs::g_loadConfigs("Gambit");
 
-    glfwMakeContextCurrent(GetGlfwWindow());
-    glfwSwapInterval(0);
+    //Graphics::EnableVsync();
 }
 
 void MainWindow::Update() {

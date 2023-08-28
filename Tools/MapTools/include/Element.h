@@ -79,7 +79,7 @@ inline LayerConfig ToLayerConfig(std::string cfg){
         return Day;
     } else if(cfg == "Tmp") {
         return Temporary;
-    }
+    } else return Temporary;
 }
 
 class Element{
@@ -95,9 +95,9 @@ public:
 
     std::string ModelName = "null";
 
-    LayerConfig Layer = Common;
+    std::string Layer = "Cmn";
 
-    std::vector<long> Parameters = std::vector<long>();
+    std::vector<int> Parameters = std::vector<int>();
     std::vector<float> FloatParameters = std::vector<float>();
 
     //std::map<std::string,std::vector<Link>> Links = std::map<std::string,std::vector<Link>>();

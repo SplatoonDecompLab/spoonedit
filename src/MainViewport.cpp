@@ -72,8 +72,12 @@ MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), 
 
     //ObjMesh = Graphics::Mesh();
 
-    GLint ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
-    glUniform4f(ObjColPos, 1, 1, 1, 1);
+    ObjIdPos = m_internalFramebuf->m_shader.getUniformLocation("ObjIdIn");
+    ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
+    TeamId = m_internalFramebuf->m_shader.getUniformLocation("TeamId");
+    CamPosLoc = m_internalFramebuf->m_shader.getUniformLocation("CameraPosition");
+    LightDirId = m_internalFramebuf->m_shader.getUniformLocation("LightDirection");
+    SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
 
 }
 
@@ -99,12 +103,7 @@ void MainViewport::Draw() {
 
     m_internalFramebuf->m_shader.use();
 
-    GLint ObjIdPos = m_internalFramebuf->m_shader.getUniformLocation("ObjIdIn");
-    GLint ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
 
-    GLint TeamId = m_internalFramebuf->m_shader.getUniformLocation("TeamId");
-
-    GLint CamPosLoc = m_internalFramebuf->m_shader.getUniformLocation("CameraPosition");
 
 
     static auto lasttime = boost::chrono::high_resolution_clock::now();
@@ -193,6 +192,13 @@ void MainViewport::Draw() {
                 m_internalFramebuf->m_shader = flatShader;
 
 
+            ObjIdPos = m_internalFramebuf->m_shader.getUniformLocation("ObjIdIn");
+            ObjColPos = m_internalFramebuf->m_shader.getUniformLocation("ObjColor");
+            TeamId = m_internalFramebuf->m_shader.getUniformLocation("TeamId");
+            CamPosLoc = m_internalFramebuf->m_shader.getUniformLocation("CameraPosition");
+            LightDirId = m_internalFramebuf->m_shader.getUniformLocation("LightDirection");
+            SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
+
             flatShading = !flatShading;
         }
         ImGui::EndPopup();
@@ -200,12 +206,12 @@ void MainViewport::Draw() {
 
     m_internalFramebuf->m_shader.use();
 
-    GLint LightDirId = m_internalFramebuf->m_shader.getUniformLocation("LightDirection");
 
 
-    glUniform3f(LightDirId, LightDir.x , LightDir.y,LightDir.z);
+    if(!flatShading)
+        glUniform3f(LightDirId, LightDir.x , LightDir.y,LightDir.z);
 
-
+    glUniform4f(ObjColPos, 1, 1, 1, 1);
 
 
     auto &map = GetMainWindow()->loadedMap;
@@ -222,66 +228,79 @@ void MainViewport::Draw() {
 
     unsigned int ObjID = 16;
 
+    if(!flatShading) {
 
+        glm::vec3 SunPos = (glm::normalize(LightDir) * 1500.0f) + camPos;
 
-    glm::vec3 SunPos = (glm::normalize(LightDir) * 1500.0f) + camPos;
+        glm::mat4 SunProj = glm::ortho(-shadowArea, shadowArea, -shadowArea, shadowArea, 1.0f, 4000.0f);
 
-    glm::mat4 SunProj = glm::ortho(-shadowArea,shadowArea,-shadowArea,shadowArea,1.0f,4000.0f);
+        glm::mat4 SunView = glm::lookAt(SunPos, camPos, {0, 1, 0});
 
-    glm::mat4 SunView = glm::lookAt(SunPos,camPos,{0,1,0});
+        glm::mat4 SunVP = SunProj * SunView;
 
-    glm::mat4 SunVP = SunProj * SunView;
+        SunCam->bind();
+        SunCam->m_shader.use();
 
-    SunCam->bind();
-    SunCam->m_shader.use();
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+        glDisable(GL_BLEND);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-    for (auto &obj: map.Objects) {
-        if (IsArea(obj.Type)) {
-            continue;
-        }
-
-        if (!MdlFromObj.contains(obj.Type)) {
-            if (boost::filesystem::exists(
-                    boost::filesystem::current_path() / "Models" / obj.Type / (obj.Type + ".dae")))
-                MdlFromObj.insert({obj.Type, Model(obj.Type)});
-            else {
-                MdlFromObj.insert({obj.Type, Model("St_Default")});
-                std::cout << "Model missing: \n\t" << obj.Type << std::endl;
+        for (auto &obj: map.Objects) {
+            if (IsArea(obj.Type)) {
+                continue;
             }
+
+            if (!MdlFromObj.contains(obj.Type)) {
+                if (boost::filesystem::exists(
+                        boost::filesystem::current_path() / "Models" / obj.Type / (obj.Type + ".dae")))
+                    MdlFromObj.insert({obj.Type, Model(obj.Type)});
+                else {
+                    MdlFromObj.insert({obj.Type, Model("St_Default")});
+                    std::cout << "Model missing: \n\t" << obj.Type << std::endl;
+                }
+            }
+
+
+            auto &mdl = MdlFromObj.find(obj.Type)->second;
+
+            mdl.Draw(obj.TF, SunCam->m_shader, SunVP);
         }
 
+        m_internalFramebuf->bind();
+        m_internalFramebuf->m_shader.use();
 
-        auto &mdl = MdlFromObj.find(obj.Type)->second;
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
-        mdl.Draw(obj.TF, SunCam->m_shader, SunVP);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
+        auto &tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
+        tex.m_texture->setActive(5);
+
+
+
+        glUniformMatrix4fv(SunVpLoc,1,GL_FALSE,&SunVP[0][0]);
     }
 
-    m_internalFramebuf->bind();
-    m_internalFramebuf->m_shader.use();
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
-    auto &tex = SunCam->getFbTexByAttachment(GL_DEPTH_ATTACHMENT);
-    tex.m_texture->setActive(5);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    GLint SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
-
-    glUniformMatrix4fv(SunVpLoc,1,GL_FALSE,&SunVP[0][0]);
 
     for (auto &obj: map.Objects) {
-        glUniform1i(TeamId,(GLint)obj.Team);
+        if(!flatShading)
+            glUniform1i(TeamId,(GLint)obj.Team);
 
         if (IsArea(obj.Type) && !drawAllAreas) {
             ObjID++;
@@ -289,7 +308,6 @@ void MainViewport::Draw() {
         } else if (IsArea(obj.Type) && drawAllAreas) {
             static auto AreaMdl = Model("St_Area");
             glUniform1ui(ObjIdPos, ObjID);
-            glUniform4f(ObjColPos, 1, 1, 1, 1);
             AreaMdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
             ObjID++;
             continue;
@@ -308,12 +326,13 @@ void MainViewport::Draw() {
 
         auto &mdl = MdlFromObj.find(obj.Type)->second;
         glUniform1ui(ObjIdPos, ObjID);
-        glUniform4f(ObjColPos, 1, 1, 1, 1);
 
         if (&obj == GetMainWindow()->selectedElem)
             glUniform4f(ObjColPos, 1, .7, .7, 1);
 
         mdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
+        if (&obj == GetMainWindow()->selectedElem)
+            glUniform4f(ObjColPos, 1, 1, 1, 1);
 
         ObjID++;
     }
@@ -321,11 +340,10 @@ void MainViewport::Draw() {
 
     if (GetMainWindow()->selectedElem != nullptr) {
         auto selobj = GetMainWindow()->selectedElem;
+        glUniform1ui(ObjIdPos, 0);
 
         if (IsArea(selobj->Type)) {
             static auto AreaMdl = Model("St_Area");
-
-            glUniform1ui(ObjIdPos, 0);
 
             AreaMdl.Draw(selobj->TF, m_internalFramebuf->m_shader, VP);
         }
@@ -333,7 +351,6 @@ void MainViewport::Draw() {
         glClear(GL_DEPTH_BUFFER_BIT);
 
         for (Link &link: GetMainWindow()->selectedElem->Links) {
-            glUniform1ui(ObjIdPos, 0);
             Element *elem = GetMainWindow()->loadedMap.GetElementById(link.Destination);
             if (elem == nullptr)
                 continue;
@@ -344,15 +361,14 @@ void MainViewport::Draw() {
         }
 
         if (Rail *rail = dynamic_cast<Rail *>(GetMainWindow()->selectedElem)) {
-            glUniform1ui(ObjIdPos, 0);
             RenderRail(rail);
         }
 
         //mdl.DrawSelection(selobj->TF);
 
-        glClear(GL_DEPTH_BUFFER_BIT);
+        //glClear(GL_DEPTH_BUFFER_BIT);
 
-        if (CurrentGizmoType == Move) {
+        /*if (CurrentGizmoType == Move) {
             static Model Arrow = Model("St_Arrow");
 
             auto tf = Transform();
@@ -445,12 +461,10 @@ void MainViewport::Draw() {
             Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
-        }
+        }*/
 
 
     }
-
-    glDisable(GL_DEPTH_TEST);
 }
 
 template<typename t>

@@ -2,14 +2,14 @@
 
 
 
-Rail::Rail(const YAML::Node &ObjNode) : Element(ObjNode, {"RailPoints","RailType","IsClosed","IsLadder","Priority"}) {
+Rail::Rail(const YAML::Node &ObjNode) : Element(ObjNode, {"RailPoints","m_railType","IsClosed","IsLadder","Priority"}) {
     YAML::Node railPointsNode = ObjNode["RailPoints"];
 
     for (auto rlpoint: railPointsNode) {
         Points.emplace_back(rlpoint);
     }
 
-    RailType = ToRailType(ObjNode["RailType"].as<std::string>());
+    m_railType = ToRailType(ObjNode["RailType"].as<std::string>());
     IsClosed = ObjNode["IsClosed"].as<bool>();
     IsLadder = ObjNode["IsLadder"].as<bool>();
     Priority = ObjNode["Priority"].as<long>();
@@ -31,7 +31,7 @@ void Rail::YamlInsertBody(YAML::Emitter &Emitter) {
     }
     Emitter << YAML::EndSeq;
 
-    Emitter << YAML::Key << "RailType" << YAML::Key << ToString(RailType);
+    Emitter << YAML::Key << "RailType" << YAML::Key << ToString(m_railType);
     Emitter << YAML::Key << "IsClosed" << YAML::Key << IsClosed;
     Emitter << YAML::Key << "IsLadder" << YAML::Key << IsLadder;
     Emitter << YAML::Key << "Priority" << YAML::Key << YAML::LocalTag("l") << Priority;

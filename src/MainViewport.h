@@ -55,7 +55,7 @@ private:
 
     unsigned int HoveredObjId = 0;
 
-    std::map<std::string,Model> MdlFromObj;
+    std::unordered_map<std::string,Model> MdlFromObj;
 
     float FarClippingPlane = 10000.0f;
     float NearClippingPlane = 0.1f;
@@ -79,6 +79,14 @@ public:
 
 private:
     void Draw() override;
+
+    //GLUniform Location Cache
+    GLint ObjIdPos;
+    GLint ObjColPos;
+    GLint TeamId;
+    GLint CamPosLoc;
+    GLint LightDirId;
+    GLint SunVpLoc;
 };
 
 

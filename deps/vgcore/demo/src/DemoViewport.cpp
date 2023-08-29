@@ -1,5 +1,5 @@
-#include "virintox/gcore/ViewportWidget.h"
-#include "virintox/gcore/Widget.h"
+#include "virintox/gcore/gui/ViewportWidget.h"
+#include "virintox/gcore/gui/Widget.h"
 #include<DemoViewport.h>
 #include<virintox/gcore/Texture.h>
 #include<iostream>

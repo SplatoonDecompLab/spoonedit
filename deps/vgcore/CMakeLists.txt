@@ -15,12 +15,22 @@ add_subdirectory(deps/glm)
 add_subdirectory(deps/glfw)
 add_subdirectory(deps/imgui)
 add_subdirectory(deps/assimp)
-if(NOT GCoreDemo)
-    add_subdirectory(demo)
-endif()
+add_subdirectory(deps/VMirror)
 
-add_library(GCore STATIC "src/Graphics.cpp" "src/Window.cpp" src/MessageBox.cpp src/Mesh.cpp src/Widget.cpp src/Viewport.cpp src/ViewportWidget.cpp src/Shader.cpp src/Texture.cpp src/Sprite.cpp src/FileSelectDialog.cpp src/Outliner.cpp src/EditorPopup.cpp)
+add_subdirectory(deps/vmath)
 
-target_link_libraries(GCore OpenGL::GL glfw GLEW::GLEW ImGUI glm::glm Boost::filesystem assimp)
+#if(NOT GCoreDemo)
+#    add_subdirectory(demo)
+#endif()
 
-target_include_directories(GCore PUBLIC include deps/IconFontCppHeaders)
+add_library(GCore STATIC src/virintox/gcore/Graphics.cpp src/virintox/gcore/gui/Window.cpp src/virintox/gcore/gui/MessageBox.cpp src/virintox/gcore/Mesh.cpp src/virintox/gcore/gui/Widget.cpp src/virintox/gcore/Framebuffer.cpp src/virintox/gcore/gui/ViewportWidget.cpp src/virintox/gcore/Shader.cpp src/virintox/gcore/Texture.cpp src/virintox/gcore/Sprite.cpp src/virintox/gcore/gui/FileSelectDialog.cpp src/virintox/gcore/Material.cpp src/virintox/gcore/Material.h
+        src/virintox/gcore/Assembly.cpp
+        src/virintox/gcore/gui/MenuItem.h
+        src/virintox/gcore/gui/MenuItem.cpp)
+
+target_link_libraries(GCore OpenGL::GL glfw GLEW::GLEW ImGUI glm::glm Boost::filesystem assimp VMath VMirror)
+
+
+target_compile_definitions(GCore PRIVATE VMIRROR_ASSEMBLYNAME="VGCore")
+
+target_include_directories(GCore PUBLIC src deps/IconFontCppHeaders)

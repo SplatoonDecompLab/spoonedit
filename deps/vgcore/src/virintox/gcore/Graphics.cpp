@@ -24,7 +24,7 @@ namespace Graphics {
     VREGISTRY(MenuSortSetter)
     VREGISTRY(InitAction)
 
-    void Graphics::Init() {
+    void Init() {
         Running = true;
         if (!glfwInit()) {
             throw std::runtime_error("Could not Initialize glfw");
@@ -33,7 +33,7 @@ namespace Graphics {
         MWheel = 1.0f;
     }
 
-    void Graphics::BeginLoop() {
+    void BeginLoop() {
         while (Running) {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -48,19 +48,19 @@ namespace Graphics {
         }
     }
 
-    void Graphics::Terminate() {
+    void Terminate() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
         glfwTerminate();
     }
 
-    void Graphics::EnableVsync() {
+    void EnableVsync() {
         glfwMakeContextCurrent(window->GetGlfwWindow());
         glfwSwapInterval(1);
     }
 
-    void Graphics::AutoInit(std::string name) {
+    void AutoInit(std::string name) {
 
         VMirror::getAssemblyRegistry()->selfRegister(getVGCoreAssemblyInfo());
 

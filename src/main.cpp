@@ -1,18 +1,14 @@
 #include<virintox/gcore/Graphics.h>
 #include"imgui.h"
-#include "virintox/gcore/gui/FileSelectDialog.h"
-#include "InstanceVars.h"
-#include "Map.h"
-#include "MainViewport.h"
-#include "Config/Configs.h"
-#include <IconsFontAwesome6.h>
+#include"virintox/gcore/gui/FileSelectDialog.h"
+#include"InstanceVars.h"
+#include"Map.h"
+#include"MainViewport.h"
+#include"Config/Configs.h"
+#include<IconsFontAwesome6.h>
 #include<Assembly.h>
 
 VMIRRORASSEMBLYSELFREGISTER(SpoonEdit, VMIRRORVERSION(0,1,0,0),VMirror::AssemblyType::Executable)
-
-VGINIT_ACTION(LoadConfigs){
-    Configs::g_loadConfigs("Gambit");
-}
 
 VGINIT_ACTION(AddMapSelector){
     Graphics::window->addWidget(new Graphics::FileSelectDialog("Select/Save Map", {".yaml"},[&](boost::filesystem::path path){

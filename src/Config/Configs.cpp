@@ -3,6 +3,11 @@
 //
 #include"Configs.h"
 #include<boost/filesystem.hpp>
+#include<virintox/gcore/Graphics.h>
+
+VGINIT_ACTION(LoadConfigs){
+        Configs::g_loadConfigs("Gambit");
+}
 
 namespace Configs {
     static std::vector<std::string> loadStringListConfig(boost::filesystem::path path) {

@@ -2,7 +2,7 @@
 
 
 
-Rail::Rail(const YAML::Node &ObjNode) : Element(ObjNode, {"RailPoints","m_railType","IsClosed","IsLadder","Priority"}) {
+Rail::Rail(const YAML::Node &ObjNode) : Element(ObjNode, {"RailPoints","RailType","IsClosed","IsLadder","Priority"}) {
     YAML::Node railPointsNode = ObjNode["RailPoints"];
 
     for (auto rlpoint: railPointsNode) {

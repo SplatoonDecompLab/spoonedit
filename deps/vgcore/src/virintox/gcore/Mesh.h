@@ -19,6 +19,7 @@ namespace Graphics {
         //explicit Mesh(boost::filesystem::path PathToModel,Shader &ShaderToUse);
 
         //explicit Mesh(const std::vector<glm::mat3x2> &Polygons, const std::vector<glm::mat3x2> &TexCoords,const std::vector<glm::vec3> &Normals, Shader &Shader = GetDefaultShader2D());
+        Mesh(const std::vector<glm::vec2> &Points, const std::vector<GLuint> &Indices);
         Mesh(const std::vector<glm::vec2> &Points, const std::vector<GLuint> &Indices,
              const std::vector<glm::vec2> &TexCoords, const std::vector<glm::vec3> &Normals);
 
@@ -34,6 +35,7 @@ namespace Graphics {
         Mesh(Mesh&&) = default;
 
         void Draw(const Graphics::Material &mat) const;
+        void Draw() const;
 
         ~Mesh();
     private:

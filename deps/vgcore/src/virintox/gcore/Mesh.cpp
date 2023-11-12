@@ -10,6 +10,35 @@
 
 namespace Graphics{
 
+    Mesh::Mesh(const std::vector<glm::vec2> &Points, const std::vector<GLuint> &Indices) {
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        VCount = Indices.size();
+
+        std::vector<float> VertexData{};
+        for(int x = 0; x < Points.size(); x++){
+            VertexData.push_back(Points[x].x);
+            VertexData.push_back(Points[x].y);
+        }
+
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, VertexData.size() * sizeof(float), VertexData.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, Indices.size() * sizeof(int), Indices.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
     //Mesh::Mesh(boost::filesystem::path PathToModel, Shader &ShaderToUse): shader(ShaderToUse){
 
     //}
@@ -21,7 +50,7 @@ namespace Graphics{
  /*       glCullFace(GL_BACK);*/
 
         VCount = Indices.size();
-        
+
         std::vector<float> VertexData{};
         for(int x = 0; x < Points.size() || x < TexCoords.size(); x++){
             VertexData.push_back(Points[x].x);
@@ -35,7 +64,7 @@ namespace Graphics{
             VertexData.push_back(Normals[x].z);
 
         }
-        
+
 
         glBindVertexArray(VAO);
 
@@ -137,6 +166,24 @@ namespace Graphics{
         mat.m_specularMap.setActive(2);
         mat.m_emmissionMap.setActive(3);
         mat.m_teamcolorMap.setActive(4);
+
+/*        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);*/
+
+        const GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+        glDrawBuffers(3, buffers);
+
+        glDrawElements(
+                GL_TRIANGLES,      // mode
+                VCount,    // count
+                GL_UNSIGNED_INT,   // type
+                (void*)0           // element array buffer offset
+        );
+    }
+
+    void Mesh::Draw() const{
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
 /*        glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);*/

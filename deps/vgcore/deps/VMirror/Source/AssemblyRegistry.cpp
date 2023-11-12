@@ -32,7 +32,7 @@ namespace VMirror{
     }
 
     void AssemblyRegistry::selfRegister(AssemblyInfo *info) {
-        std::cout << "Registering assembly :" << info->m_name << std::endl;
+        std::cout << "Registering assembly: " << info->m_name << std::endl;
 
         if(std::any_of(m_assemblies.begin(), m_assemblies.end(),[&](const std::unique_ptr<Assembly> &assembly){
             return assembly->m_info->m_name == info->m_name;

@@ -17,7 +17,7 @@
 #ifdef VMIRROR_SELF_OVERRIDE
 #   define VMIRROR_OVERRIDE true
 #   define VMIRROR_ASSEMBLYNAME "NONE"
-#   warning VMirror self override is enabled THIS IS ONLY FOR USE BY VMIRROR ITSELF
+#   pragma message ( "VMirror self override is enabled THIS IS ONLY FOR USE BY VMIRROR ITSELF" )
 #endif
 
 namespace VMirror{

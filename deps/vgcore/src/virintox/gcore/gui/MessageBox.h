@@ -1,6 +1,10 @@
 #pragma once
 #include "Widget.h"
 #include <exception>
+
+#ifdef WIN32
+#undef MessageBox
+#endif
 namespace Graphics{
 
     enum ErrorSeverity{

@@ -99,6 +99,8 @@ namespace Graphics {
             info->construct();
         }
 
+        glfwSwapInterval(1);
+
         Graphics::BeginLoop();
         Graphics::Quit();
     }

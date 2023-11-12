@@ -19,13 +19,9 @@ namespace Graphics {
 
     void Framebuffer::bind() {
         glBindFramebuffer(GL_FRAMEBUFFER,m_framebufferId);
-
         m_shader.use();
-
         glViewport(0, 0, m_size.x, m_size.y);
-
         setBuffers();
-
     }
 
     void Framebuffer::setBuffers() {

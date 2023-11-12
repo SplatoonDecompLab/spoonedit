@@ -5,7 +5,7 @@
 namespace Graphics{
     class ViewportWidget : public Graphics::Widget{
     public:
-        VABSTRACTCLASS(ViewportWidget,ESC({&Widget::classInfo}))
+        VABSTRACTCLASS(ViewportWidget,ESC({&Widget::classInfo, nullptr}))
         ViewportWidget(std::string name,bool active);
         void PreDraw() override;
         void PostDraw() override;

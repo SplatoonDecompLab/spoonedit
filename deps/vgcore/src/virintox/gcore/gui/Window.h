@@ -116,9 +116,9 @@ namespace Graphics{
 class MenuName##SortSetter: public Graphics::MenuSortSetter{ \
     VCLASS(MenuName##SortSetteer, ESC({&Graphics::MenuSortSetter::classInfo,nullptr}))\
     MenuName##SortSetter(): Graphics::MenuSortSetter(#MenuName,id){                   \
-        delete this;               \
-    } \
-};                              \
+        delete this;                \
+    }                               \
+};                                  \
 REGISTERVCLASS(MenuName##SortSetter)
 
 }

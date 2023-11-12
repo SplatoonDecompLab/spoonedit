@@ -4,7 +4,7 @@ project(VMirror)
 set(CMAKE_CXX_STANDARD 20)
 
 
-add_library(VMirror SHARED
+add_library(VMirror STATIC
         Source/AssemblyRegistry.cpp
         Source/AssemblyRegistry.h
         Source/NativeImpl/NativeAssembly.h

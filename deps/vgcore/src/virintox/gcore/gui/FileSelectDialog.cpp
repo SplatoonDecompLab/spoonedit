@@ -5,6 +5,7 @@
 #include "IconsFontAwesome6.h"
 #include "FileSelectDialog.h"
 #include<misc/cpp/imgui_stdlib.h>
+#include"MessageBox.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -71,7 +72,7 @@ namespace Graphics {
                                                         OnOpenFunc,
                                                         [](boost::filesystem::path p) {
                                                             Graphics::window->msgBoxes.push_back(
-                                                                    new MessageBox(
+                                                                    new Graphics::MessageBox(
                                                                             "Saving should not be enabled for this File Selector!!!",
                                                                             Warning));
                                                         }) {}

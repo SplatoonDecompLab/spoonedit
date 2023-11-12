@@ -4,10 +4,11 @@
 
 #ifndef ENGINE_NATIVEASSEMBLYINTERNALS_H
 #define ENGINE_NATIVEASSEMBLYINTERNALS_H
+#include <windows.h>
 
 namespace VMirror{
     struct NativeAssemblyInternals {
-
+        //HINSTANCE m_assembly;
     };
 }
 

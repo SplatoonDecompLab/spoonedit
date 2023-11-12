@@ -88,7 +88,6 @@ namespace Graphics {
             ImGui::OpenPopup("Are you sure?##QuitModal");
         }
 
-        glfwSwapInterval(0);
         DrawBG();
 
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(),ImGuiDockNodeFlags_PassthruCentralNode);

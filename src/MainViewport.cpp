@@ -50,7 +50,7 @@ MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), 
     m_internalFramebuf = std::make_unique<Graphics::Framebuffer>(
             std::vector<Graphics::FramebufferTextureInfo>{
                 {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0},
-                {GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, GL_COLOR_ATTACHMENT1},
+                {GL_R32I, GL_RED_INTEGER, GL_INT, GL_COLOR_ATTACHMENT1},
                 {GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2},
                 {GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, GL_DEPTH_STENCIL_ATTACHMENT}
             },
@@ -321,7 +321,7 @@ void MainViewport::Draw() {
             continue;
         } else if (IsArea(obj.Type) && drawAllAreas) {
             static auto AreaMdl = Model("St_Area");
-            glUniform1ui(ObjIdPos, ObjID);
+            glUniform1i(ObjIdPos, ObjID);
             AreaMdl.Draw(obj.TF, m_internalFramebuf->m_shader, VP);
             ObjID++;
             continue;
@@ -339,7 +339,7 @@ void MainViewport::Draw() {
 
 
         auto &mdl = MdlFromObj.find(obj.Type)->second;
-        glUniform1ui(ObjIdPos, ObjID);
+        glUniform1i(ObjIdPos, ObjID);
 
         if (&obj == selectedElem)
             glUniform4f(ObjColPos, 1, .7, .7, 1);
@@ -354,7 +354,7 @@ void MainViewport::Draw() {
 
     if (selectedElem != nullptr) {
         auto selobj = selectedElem;
-        glUniform1ui(ObjIdPos, 0);
+        glUniform1i(ObjIdPos, 0);
 
         if (IsArea(selobj->Type)) {
             static auto AreaMdl = Model("St_Area");
@@ -395,21 +395,21 @@ void MainViewport::Draw() {
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
             if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
-            glUniform1ui(ObjIdPos, 1);
+            glUniform1i(ObjIdPos, 1);
             Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {0, 0, 0};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
             if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
-            glUniform1ui(ObjIdPos, 2);
+            glUniform1i(ObjIdPos, 2);
             Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {90, 0, 0};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
             if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
-            glUniform1ui(ObjIdPos, 3);
+            glUniform1i(ObjIdPos, 3);
             Arrow.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
@@ -426,21 +426,21 @@ void MainViewport::Draw() {
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
             if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
-            glUniform1ui(ObjIdPos, 1);
+            glUniform1i(ObjIdPos, 1);
             Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {selobj->TF.Rotation.X, selobj->TF.Rotation.Y, selobj->TF.Rotation.Z};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
             if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
-            glUniform1ui(ObjIdPos, 2);
+            glUniform1i(ObjIdPos, 2);
             Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {selobj->TF.Rotation.X + 90, selobj->TF.Rotation.Y, selobj->TF.Rotation.Z};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
             if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
-            glUniform1ui(ObjIdPos, 3);
+            glUniform1i(ObjIdPos, 3);
             Scalar.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
@@ -457,21 +457,21 @@ void MainViewport::Draw() {
             glUniform4f(ObjColPos, 0.5, 0, 0, 1);
             if (HoveredObjId == 1)
                 glUniform4f(ObjColPos, 1, 0, 0, 1);
-            glUniform1ui(ObjIdPos, 1);
+            glUniform1i(ObjIdPos, 1);
             Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {0, 0, 0};
             glUniform4f(ObjColPos, 0, 0.5, 0, 1);
             if (HoveredObjId == 2)
                 glUniform4f(ObjColPos, 0, 1, 0, 1);
-            glUniform1ui(ObjIdPos, 2);
+            glUniform1i(ObjIdPos, 2);
             Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             tf.Rotation = {90, 0, 0};
             glUniform4f(ObjColPos, 0, 0, 0.5, 1);
             if (HoveredObjId == 3)
                 glUniform4f(ObjColPos, 0, 0, 1, 1);
-            glUniform1ui(ObjIdPos, 3);
+            glUniform1i(ObjIdPos, 3);
             Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
@@ -544,9 +544,9 @@ void MainViewport::HandleInput(InputEvent event) {
 
             glBindFramebuffer(GL_FRAMEBUFFER, m_internalFramebuf->getId());
             glReadBuffer(GL_COLOR_ATTACHMENT1);
-            unsigned int obj = 0;
+            int obj = 0;
 
-            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &obj);
+            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_INT, &obj);
 
 
             if (obj < 16) {
@@ -652,9 +652,9 @@ void MainViewport::HandleInput(InputEvent event) {
 
             glBindFramebuffer(GL_FRAMEBUFFER, m_internalFramebuf->getId());
             glReadBuffer(GL_COLOR_ATTACHMENT1);
-            unsigned int obj = 0;
+            int obj = 0;
 
-            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &obj);
+            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_INT, &obj);
 
             if (CurrentGizmoType == Move) {
                 if (SpecialObjCur == 0) {

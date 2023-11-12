@@ -27,9 +27,8 @@ void ObjectSelectWidget::Draw() {
     static unsigned int counter = 0;
     counter = 0;
 
-    for(auto &obj: loadedMap.Objects){
-
-
+    for(auto iter = loadedMap.Objects.begin(); iter != loadedMap.Objects.end();iter++){
+        LevelObject& obj = *iter;
         if(ImGui::Selectable((obj.Name + ": " + obj.Type + "##" + std::to_string(obj.runtimeID)).c_str(),selectedElem == &obj)){
             selectedElem = &obj;
         }
@@ -43,7 +42,9 @@ void ObjectSelectWidget::Draw() {
 
             if(ImGui::MenuItem((std::string("Delete##: ObjSelect ") + std::to_string(obj.runtimeID)).c_str())){
                 std::cout << "Deleting " + obj.Name << std::endl;
-                loadedMap.Objects.erase(loadedMap.Objects.begin()+counter);
+                auto itertemp = iter;
+                iter--;
+                loadedMap.Objects.erase(itertemp);
                 selectedElem = nullptr;
             }
 

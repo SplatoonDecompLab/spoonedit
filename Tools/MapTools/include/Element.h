@@ -22,66 +22,6 @@ enum LayerConfig{
     Temporary //Tmp
 };
 
-inline std::string ToStringYaml(LayerConfig cfg){
-    if(cfg == Common){
-        return "Cmn";
-    } else if(cfg == Paint){
-        return "Pnt";
-    } else if(cfg == Rainmaker) {
-        return "Vlf";
-    } else if(cfg == Tower) {
-        return "Vgl";
-    } else if(cfg == Area) {
-        return "Var";
-    } else if(cfg == Night) {
-        return "Night";
-    } else if(cfg == Day) {
-        return "Day";
-    } else if(cfg == Temporary) {
-        return "Tmp";
-    }
-}
-
-inline std::string ToString(LayerConfig cfg){
-    if(cfg == Common){
-        return "Common";
-    } else if(cfg == Paint){
-        return "Paint";
-    } else if(cfg == Rainmaker) {
-        return "Rainmaker";
-    } else if(cfg == Tower) {
-        return "Tower";
-    } else if(cfg == Area) {
-        return "Area";
-    } else if(cfg == Night) {
-        return "Night";
-    } else if(cfg == Day) {
-        return "Day";
-    } else if(cfg == Temporary) {
-        return "Temporary";
-    }
-}
-
-inline LayerConfig ToLayerConfig(std::string cfg){
-    if(cfg == "Cmn"){
-        return Common;
-    } else if(cfg == "Pnt"){
-        return Paint;
-    } else if(cfg == "Vlf") {
-        return Rainmaker;
-    } else if(cfg == "Vgl") {
-        return Tower;
-    } else if(cfg == "Var") {
-        return Area;
-    } else if(cfg == "Night") {
-        return Night;
-    } else if(cfg == "Day") {
-        return Day;
-    } else if(cfg == "Tmp") {
-        return Temporary;
-    } else return Temporary;
-}
-
 class Element{
 public:
     Element() = default;
@@ -106,11 +46,11 @@ public:
     std::map<std::string,std::string> OtherOptions = std::map<std::string,std::string>();
 
     bool IsLinkDest = false;
-    void YamlInsert(YAML::Emitter &Emitter);
+    void YamlInsert(YAML::Emitter &Emitter,bool compiled = false);
 
     virtual ~Element() = default;
 protected:
-    virtual void YamlInsertBody(YAML::Emitter &Emitter);
+    virtual void YamlInsertBody(YAML::Emitter &Emitter,bool compiled = false);
 };
 
 #endif //SPOONTOOL_ELEMENT_H

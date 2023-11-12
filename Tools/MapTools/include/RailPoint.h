@@ -18,7 +18,7 @@ struct RailPoint: public Element{
 
 protected:
 
-    void YamlInsertBody(YAML::Emitter &Emitter) override;
+    void YamlInsertBody(YAML::Emitter &Emitter,bool compiled = false) override;
 public:
 
     std::vector<Vector3> m_controlPoints = std::vector<Vector3>();

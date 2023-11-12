@@ -18,18 +18,14 @@ namespace Teams{
     constexpr long Enemy = 1;
     constexpr long Neutral = 2;
 
-    constexpr std::array<long,3> AllOptions = {Player,Neutral,Enemy};
-
-    inline constexpr std::string TeamToText(long team) {
+    inline long flipTeam(long team){
         switch(team){
-            case 0:
-                return "Player";
-            case 1:
-                return "Enemy";
-            case 2:
-                return "Neutral";
+            case Player:
+                return Enemy;
+            case Enemy:
+                return Player;
             default:
-                return "Invalid";
+                return team;
         }
     }
 }
@@ -77,10 +73,11 @@ struct LevelObject: public Element{
     LevelObject(const YAML::Node &ObjNode);
 
 protected:
-    void YamlInsertBody(YAML::Emitter &Emitter) override;
+    void YamlInsertBody(YAML::Emitter &Emitter,bool compiled = false) override;
 public:
     long Team;
     long DropId;
+    bool m_isStatic;
 
     ~LevelObject() = default;
 };

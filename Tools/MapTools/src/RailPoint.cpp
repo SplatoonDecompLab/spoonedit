@@ -24,7 +24,7 @@ RailPoint::RailPoint(const Vector3 &pos) {
     m_controlPoints.push_back(pos);
 }
 
-void RailPoint::YamlInsertBody(YAML::Emitter &Emitter) {
+void RailPoint::YamlInsertBody(YAML::Emitter &Emitter,bool compiled) {
     Element::YamlInsertBody(Emitter);
     Emitter << YAML::Key << "ControlPoints" << YAML::BeginSeq;
     for(auto ctrlPoint: m_controlPoints){

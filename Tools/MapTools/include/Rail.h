@@ -51,7 +51,7 @@ struct Rail: public Element{
     ~Rail() override = default;
 
 protected:
-    void YamlInsertBody(YAML::Emitter &Emitter) override;
+    void YamlInsertBody(YAML::Emitter &Emitter,bool compiled = false) override;
 };
 
 #endif //SPOONTOOL_RAIL_H

@@ -83,6 +83,11 @@ MainViewport::MainViewport() : Graphics::ViewportWidget("Main Viewport", true), 
     CamPosLoc = m_internalFramebuf->m_shader.getUniformLocation("CameraPosition");
     LightDirId = m_internalFramebuf->m_shader.getUniformLocation("LightDirection");
     SunVpLoc = m_internalFramebuf->m_shader.getUniformLocation("SunVP");
+    distribLoc = m_internalFramebuf->m_shader.getUniformLocation("distribution");
+    shadHardLoc = m_internalFramebuf->m_shader.getUniformLocation("shadowHardness");
+
+    //Todo: update
+    camFwdDir = flatShader.getUniformLocation("CamFwdDir");
 
 }
 
@@ -163,12 +168,11 @@ void MainViewport::Draw() {
 
 
     glm::mat4 projectionMatrix = glm::perspective(
-            glm::radians(
-                    fov), // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+            glm::radians(fov),
             (float) m_internalFramebuf->getSize().x /
-            (float) m_internalFramebuf->getSize().y,       // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
-            NearClippingPlane,              // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-            FarClippingPlane             // Far clipping plane. Keep as little as possible.
+            (float) m_internalFramebuf->getSize().y,
+            NearClippingPlane,
+            FarClippingPlane
     );
 
     //glm::mat4 ViewMatrix = glm::translate(glm::mat4(1.0f), -camPos);
@@ -176,7 +180,7 @@ void MainViewport::Draw() {
 
     VP = projectionMatrix * ViewMatrix;// * ViewMatrix * ModelMat;
 
-    glUniform3f(CamPosLoc, camPos.x,camPos.y,camPos.z);
+
 
     if (ImGui::BeginPopup("Main VP Debug")) {
         ImGui::DragFloat3("Camera Postion", &camPos.x, 0.01);
@@ -185,6 +189,8 @@ void MainViewport::Draw() {
         ImGui::DragFloat("Speed", &speed, 1);
         ImGui::DragFloat("Near Clipping Plane", &NearClippingPlane, 1);
         ImGui::DragFloat("Far Clipping Plane", &FarClippingPlane, 1);
+        ImGui::DragFloat("Shadow Smoothing", &m_smoothingFactor, 1);
+        ImGui::DragFloat("Shadow Hardness", &m_shadowHardness, 1);
         ImGui::DragFloat("Shadow Area", &shadowArea, 0.01);
         //ImGui::SliderFloat("Shading Effectiveness", &ShadingEffectiveness, 0, 1);
         ImGui::DragFloat3("Light Direction", &LightDir.x, 0.01);
@@ -209,14 +215,21 @@ void MainViewport::Draw() {
         ImGui::EndPopup();
     }
 
-    m_internalFramebuf->m_shader.use();
+    glUniform3f(CamPosLoc, camPos.x,camPos.y,camPos.z);
 
+    glUniform1f(distribLoc, m_smoothingFactor);
+    glUniform1f(shadHardLoc, m_shadowHardness);
+
+    m_internalFramebuf->m_shader.use();
 
 
     if(!flatShading)
         glUniform3f(LightDirId, LightDir.x , LightDir.y,LightDir.z);
 
     glUniform4f(ObjColPos, 1, 1, 1, 1);
+
+
+    glUniform3f(camFwdDir, cameraDirection.x, cameraDirection.y, cameraDirection.z);
 
     glDrawBuffer(GL_COLOR_ATTACHMENT1);
     GLuint ClearID[] = {0};
@@ -232,11 +245,11 @@ void MainViewport::Draw() {
 
     if(!flatShading) {
 
-        glm::vec3 SunPos = (glm::normalize(LightDir) * 1500.0f) + camPos;
+        glm::vec3 SunPos = glm::normalize(LightDir) * 2000.0f;
 
-        glm::mat4 SunProj = glm::ortho(-shadowArea, shadowArea, -shadowArea, shadowArea, 1.0f, 4000.0f);
+        glm::mat4 SunProj = glm::ortho(-shadowArea, shadowArea, -shadowArea, shadowArea, 500.0f, 3000.0f );
 
-        glm::mat4 SunView = glm::lookAt(SunPos, camPos, {0, 1, 0});
+        glm::mat4 SunView = glm::lookAt(SunPos, {0, 0, 0}, {0, 1, 0});
 
         glm::mat4 SunVP = SunProj * SunView;
 
@@ -301,8 +314,7 @@ void MainViewport::Draw() {
 
 
     for (auto &obj: loadedMap.Objects) {
-        if(!flatShading)
-            glUniform1i(TeamId,(GLint)obj.Team);
+        glUniform1i(TeamId,(GLint)obj.Team);
 
         if (IsArea(obj.Type) && !drawAllAreas) {
             ObjID++;
@@ -368,9 +380,9 @@ void MainViewport::Draw() {
 
         //mdl.DrawSelection(selobj->TF);
 
-        //glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-        /*if (CurrentGizmoType == Move) {
+        if (CurrentGizmoType == Move) {
             static Model Arrow = Model("St_Arrow");
 
             auto tf = Transform();
@@ -463,7 +475,7 @@ void MainViewport::Draw() {
             Rotator.Draw(tf, m_internalFramebuf->m_shader, VP);
 
             glUniform4f(ObjColPos, 1, 1, 1, 1);
-        }*/
+        }
 
 
     }
@@ -624,7 +636,14 @@ void MainViewport::HandleInput(InputEvent event) {
 
             obj -= 16;
 
-            selectedElem = &loadedMap.Objects[obj];
+            auto iter = loadedMap.Objects.begin();
+
+            while(obj != 0){
+                iter++;
+                obj--;
+            }
+
+            selectedElem = &*iter;
         }
             break;
         case (InputType::MouseHoldL): {

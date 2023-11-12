@@ -3,7 +3,6 @@
 #include <iomanip>
 
 Element::Element(const YAML::Node &ObjNode,std::list<std::string> PropertyBlockList) {
-
     PropertyBlockList.emplace_back("Id");
     PropertyBlockList.emplace_back("UnitConfigName");
     PropertyBlockList.emplace_back("LayerConfigName");
@@ -76,13 +75,13 @@ Element::Element(const YAML::Node &ObjNode,std::list<std::string> PropertyBlockL
 
 }
 
-void Element::YamlInsert(YAML::Emitter &Emitter) {
+void Element::YamlInsert(YAML::Emitter &Emitter,bool compiled) {
     Emitter << YAML::BeginMap;
-    YamlInsertBody(Emitter);
+    YamlInsertBody(Emitter,compiled);
     Emitter << YAML::EndMap;
 }
 
-void Element::YamlInsertBody(YAML::Emitter &Emitter) {
+void Element::YamlInsertBody(YAML::Emitter &Emitter,bool compiled) {
     Emitter << YAML::Key << "Id" << YAML::Value << Name;
 
     TF.InsertIntoYaml(Emitter);

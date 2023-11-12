@@ -198,8 +198,8 @@ void ImGuiDrawElem(Element *elem, std::string Id = "") {
         if (levelObject) {
             //ImGuiDrawTeamSelect(levelObject,Id);
             Configs::g_imguiDrawOpts("Team##" + Id, Configs::g_teams, levelObject->Team);
-
             Configs::g_imguiDrawOpts("Drop##" + Id, Configs::g_dropIdOpts, levelObject->DropId);
+            ImGui::Checkbox(("IsStatic##" + Id).c_str(), &(levelObject->m_isStatic));
         }
 
         if (railPoint) {

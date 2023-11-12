@@ -22,7 +22,7 @@ Rail::Rail(const Vector3 &Position) {
     Points.emplace_back(Position);
 }
 
-void Rail::YamlInsertBody(YAML::Emitter &Emitter) {
+void Rail::YamlInsertBody(YAML::Emitter &Emitter,bool compiled) {
     Element::YamlInsertBody(Emitter);
 
     Emitter << YAML::Key << "RailPoints" << YAML::BeginSeq;

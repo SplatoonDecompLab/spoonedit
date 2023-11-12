@@ -17,8 +17,76 @@ Map::Map(): Objects(), Rails() {
 
 }
 
-void Map::Save(boost::filesystem::path FileLocation) {
+Map::Map(boost::filesystem::path file): Objects(), Rails(), m_fieldOptions() {
 
+    YAML::Node MapYaml = YAML::LoadFile(file.generic_string());
+
+    auto FldOpts = MapYaml["MapGenInfo"];
+
+    m_fieldOptions.m_fieldName = FldOpts["FldName"].as<std::string>();
+
+    auto ObjList = MapYaml["Objects"];
+
+    if(!ObjList.IsSequence()) throw std::runtime_error("Something went Wrong!");
+
+
+    for (YAML::iterator it = ObjList.begin(); it != ObjList.end(); it++) {
+        const YAML::Node& obj = *it;
+
+        Objects.push_back(LevelObject(obj));
+    }
+
+    auto RailList = MapYaml["Rails"];
+
+    if(!RailList.IsSequence()) throw std::runtime_error("Failed to load map:\n\tRail list isn't a sequence");
+
+    for (YAML::iterator it = RailList.begin(); it != RailList.end(); it++) {
+        const YAML::Node& obj = *it;
+
+        Rail newObj(obj);
+
+        Rails.push_back(newObj);
+    }
+}
+
+void Map::Save(boost::filesystem::path FileLocation) {
+    YAML::Emitter Emitter;
+
+    Emitter << YAML::BeginMap;
+    //Emitter << YAML::
+
+    Emitter << YAML::Key << "MapGenInfo" << YAML::BeginMap;
+    {
+        Emitter << YAML::Key << "FldName" << YAML::Value << m_fieldOptions.m_fieldName;
+    }
+    Emitter << YAML::EndMap;
+
+    Emitter << YAML::Key << "Objects" << YAML::BeginSeq;
+
+    for(auto& obj: Objects){
+        obj.YamlInsert(Emitter);
+    }
+    //Objs
+    Emitter << YAML::EndSeq;
+
+    Emitter << YAML::Key << "Rails" << YAML::BeginSeq;
+
+    for(auto obj: Rails){
+        obj.YamlInsert(Emitter);
+    }
+    Emitter << YAML::EndSeq;
+    //main document
+    Emitter << YAML::EndMap;
+
+    std::ofstream file(FileLocation.string());
+
+    std::string str = Emitter.c_str();
+
+    boost::algorithm::replace_all(str,"~","null");
+
+    file << str;
+    file.flush();
+    file.close();
 }
 
 void Map::Export(boost::filesystem::path YamlOut) {
@@ -36,7 +104,7 @@ void Map::Export(boost::filesystem::path YamlOut) {
     Emitter << YAML::Key << "Objs" << YAML::BeginSeq;
 
     for(auto& obj: Objects){
-        obj.YamlInsert(Emitter);
+        obj.YamlInsert(Emitter,true);
     }
     //Objs
     Emitter << YAML::EndSeq;
@@ -44,7 +112,7 @@ void Map::Export(boost::filesystem::path YamlOut) {
     Emitter << YAML::Key << "Rails" << YAML::BeginSeq;
 
     for(auto obj: Rails){
-        obj.YamlInsert(Emitter);
+        obj.YamlInsert(Emitter,true);
     }
     Emitter << YAML::EndSeq;
 
@@ -103,6 +171,8 @@ Map ConvertFromYaml(boost::filesystem::path File){
     }
 
     auto RailList = RootNode["Rails"];
+
+    if(!RailList.IsSequence()) throw std::runtime_error("Something went Wrong!");
 
     for (YAML::iterator it = RailList.begin(); it != RailList.end(); it++) {
         const YAML::Node& obj = *it;

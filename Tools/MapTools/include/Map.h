@@ -8,11 +8,17 @@
 #include<boost/filesystem.hpp>
 #include<LevelObject.h>
 #include<Rail.h>
+#include<filesystem>
 
+struct FieldOptions{
+    std::string m_fieldName = "Fld_Unk";
+
+};
 
 struct Map {
-    //STREEFUNCS
     Map();
+    //Loads file from custom map format
+    Map(boost::filesystem::path file);
 
     void Save(boost::filesystem::path FileLocation);
 
@@ -20,16 +26,19 @@ struct Map {
 
     void Export(boost::filesystem::path YamlOut);
 
-    std::vector<LevelObject> Objects;
+    std::list<LevelObject> Objects;
 
-    std::vector<Rail> Rails;
+    std::list<Rail> Rails;
+
+    std::filesystem::path m_filePath;
+
+    FieldOptions m_fieldOptions;
 
     Element* GetElementById(std::string id);
-
-
 };
 
 Map ConvertFromYaml(boost::filesystem::path File);
+
 
 
 #endif //SPOONTOOL_MAP_H

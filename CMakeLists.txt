@@ -11,7 +11,9 @@ add_subdirectory(Tools/MapTools)
 
 add_executable(SpoonEdit src/main.cpp src/PropertiesWidget.cpp src/PropertiesWidget.h src/ObjectSelectWidget.cpp src/ObjectSelectWidget.h src/MainViewport.cpp src/MainViewport.h src/Model.cpp src/Model.h src/RailSelectWidget.cpp src/RailSelectWidget.h src/Config/Configs.h src/Config/Configs.cpp
         src/InstanceVars.h
-        src/Objects.cpp)
+        src/Objects.cpp
+        src/MapGenOut.cpp
+        src/MapMirroring.cpp)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 

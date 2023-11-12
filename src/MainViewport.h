@@ -31,9 +31,14 @@ public:
     void clearModels();
 
     void cleanUnnescessary();
+
+    std::unordered_map<std::string,Model> MdlFromObj;
+
+    glm::mat4 VP;
+
 private:
 
-    float shadowArea = 750.0f;
+    float shadowArea = 1500.0f;
 
     Graphics::Shader flatShader;
     Graphics::Shader defaultShader;
@@ -56,12 +61,14 @@ private:
 
     unsigned int HoveredObjId = 0;
 
-    std::unordered_map<std::string,Model> MdlFromObj;
+
 
     float FarClippingPlane = 10000.0f;
     float NearClippingPlane = 0.1f;
+    float m_smoothingFactor = 1.0f;
+    float m_shadowHardness = 2.5f;
 
-    glm::mat4 VP;
+
 
     glm::vec3 LightDir = {1,1,1};
 
@@ -88,6 +95,9 @@ private:
     GLint CamPosLoc;
     GLint LightDirId;
     GLint SunVpLoc;
+    GLint distribLoc;
+    GLint shadHardLoc;
+    GLint camFwdDir;
 };
 
 
